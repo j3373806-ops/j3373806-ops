@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Extreme Horror Game</title>
+<style>
+body{margin:0;overflow:hidden;background:black;color:white;font-family:monospace}
+canvas{display:block}
+#overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;text-align:center}
+.card{max-width:700px;padding:40px}
+h1{font-size:48px}
+p{font-size:20px}
+button{margin-top:20px;padding:12px 20px;border:none;border-radius:999px;font-weight:bold;cursor:pointer}
+.glitch{animation:glitch 0.1s infinite}
+@keyframes glitch{
+0%{transform:translate(0,0)}
+25%{transform:translate(-6px,3px)}
+50%{transform:translate(6px,-3px)}
+75%{transform:translate(-4px,-5px)}
+100%{transform:translate(0,0)}
+}
+.eye{
+ position:absolute;
+ width:40px;height:20px;
+ border-radius:50%;
+ background:white;
+ box-shadow:0 0 20px white;
+}
+.pupil{
+ width:10px;height:10px;background:black;border-radius:50%;margin:auto;margin-top:5px;
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="overlay">
+ <div class="card" id="start">
+  <h1>DON'T PLAY THIS</h1>
+  <button onclick="startGame()">Ignore Warning</button>
+ </div>
+</div>
+
+<script>
+const canvas=document.getElementById('c');
+const ctx=canvas.getContext('2d');
+let W,H;function resize(){W=canvas.width=innerWidth;H=canvas.height=innerHeight}resize();addEventListener('resize',resize);
+
+let state='start',loop=0,frozen=false;
+let player={x:200,y:200};
+let items=[];
+
+function speak(text){
+ const u=new SpeechSynthesisUtterance(text);
+ u.pitch=0.4;u.rate=0.6;
+ speechSynthesis.speak(u);
+}
+
+function spawn(){items=[];for(let i=0;i<6;i++){items.push({x:Math.random()*W,y:Math.random()*H,done:false})}}
+
+function startGame(){
+ document.getElementById('overlay').innerHTML="";
+ state='play';loop=1;spawn();
+ haunting();
+}
+
+function draw(){
+ if(frozen){requestAnimationFrame(draw);return;}
+ ctx.fillStyle='rgba(0,0,0,0.4)';ctx.fillRect(0,0,W,H);
+ if(state==='play'){
+  ctx.fillStyle='white';ctx.beginPath();ctx.arc(player.x,player.y,8,0,Math.PI*2);ctx.fill();
+  items.forEach(i=>{if(!i.done){ctx.fillStyle='red';ctx.beginPath();ctx.arc(i.x,i.y,6,0,Math.PI*2);ctx.fill();}});
+  if(items.every(i=>i.done)){
+    loop++;
+    if(loop<=3){spawn(); haunting();}
+    else ending();
+  }
+ }
+ requestAnimationFrame(draw);
+}
+
+draw();
+
+addEventListener('pointermove',e=>{
+ if(frozen) return;
+ player.x=e.clientX;player.y=e.clientY;
+ items.forEach(i=>{if(!i.done && Math.hypot(player.x-i.x,player.y-i.y)<12)i.done=true});
+});
+
+function haunting(){
+ // fake camera access
+ setTimeout(()=>{
+  const overlay=document.getElementById('overlay');
+  overlay.innerHTML=`<div class="card glitch"><h1>📷 CAMERA ACCESSED</h1></div>`;
+  speak('camera accessed');
+  setTimeout(()=>overlay.innerHTML="",1200);
+ },Math.random()*3000);
+
+ // eyes appear
+ setTimeout(()=>{
+  const eye=document.createElement('div');
+  eye.className='eye';
+  eye.style.left=Math.random()*W+'px';
+  eye.style.top=Math.random()*H+'px';
+  const pupil=document.createElement('div');
+  pupil.className='pupil';
+  eye.appendChild(pupil);
+  document.body.appendChild(eye);
+  setTimeout(()=>eye.remove(),800);
+ },Math.random()*3000);
+
+ // random freeze
+ setTimeout(()=>{
+  frozen=true;
+  speak('I see you');
+  setTimeout(()=>frozen=false,1500);
+ },Math.random()*4000);
+}
+
+function ending(){
+ state='end';
+ const overlay=document.getElementById('overlay');
+
+ speak('Khushi... I found you');
+
+ overlay.innerHTML=`<div class="card glitch"><h1>I WAS WATCHING</h1></div>`;
+
+ setTimeout(()=>{
+   overlay.innerHTML=`<div class="card glitch"><h1>YOU CAN'T ESCAPE</h1></div>`;
+ },1500);
+
+ setTimeout(()=>{
+   overlay.innerHTML=`<div class="card"><h1>Khushi</h1></div>`;
+ },3000);
+
+ setTimeout(()=>{
+   overlay.innerHTML=`
+   <div class="card">
+     <p>You have successfully won the game.</p>
+     <p>Now it's time you and Tirthal win the world together.</p>
+     <p>Trust me, being a computer, I know he is one of the best men you will ever see.</p>
+     <p>He will respect a girl like never before.</p>
+     <button onclick="location.reload()">Restart</button>
+   </div>`;
+ },5000);
+}
+</script>
+</body>
+</html>
