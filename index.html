@@ -3,146 +3,1342 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Extreme Horror Game</title>
+<title>Tirthal Kothari — Supply Chain Architect</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400;600&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
-body{margin:0;overflow:hidden;background:black;color:white;font-family:monospace}
-canvas{display:block}
-#overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;text-align:center}
-.card{max-width:700px;padding:40px}
-h1{font-size:48px}
-p{font-size:20px}
-button{margin-top:20px;padding:12px 20px;border:none;border-radius:999px;font-weight:bold;cursor:pointer}
-.glitch{animation:glitch 0.1s infinite}
-@keyframes glitch{
-0%{transform:translate(0,0)}
-25%{transform:translate(-6px,3px)}
-50%{transform:translate(6px,-3px)}
-75%{transform:translate(-4px,-5px)}
-100%{transform:translate(0,0)}
+:root {
+  --bg: #060a0f;
+  --bg2: #0b1220;
+  --amber: #f0a500;
+  --amber2: #ffc93c;
+  --steel: #8ba7c7;
+  --muted: #3a4f6a;
+  --text: #d4e0ee;
+  --white: #f0f4f8;
+  --red: #e05c5c;
+  --green: #4ecb71;
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-serif: 'Cormorant Garamond', serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --transition-dur: 0.85s;
+  --transition-ease: cubic-bezier(0.77,0,0.175,1);
 }
-.eye{
- position:absolute;
- width:40px;height:20px;
- border-radius:50%;
- background:white;
- box-shadow:0 0 20px white;
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--font-mono);cursor:none;}
+
+/* ── FILM GRAIN ── */
+#grain{position:fixed;inset:0;pointer-events:none;z-index:9997;opacity:.055;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:180px 180px;animation:grainShift .18s steps(3) infinite;}
+@keyframes grainShift{0%{background-position:0 0}33%{background-position:-30px -50px}66%{background-position:20px -80px}100%{background-position:-60px 30px}}
+
+/* ── LETTERBOX ── */
+.letterbox{position:fixed;left:0;right:0;height:4.5vh;background:#000;z-index:9989;transition:transform 1.2s var(--transition-ease);}
+#lb-top{top:0;}#lb-bottom{bottom:0;}
+#lb-top.gone{transform:translateY(-101%);}#lb-bottom.gone{transform:translateY(101%);}
+
+/* ── ANTI-GRAVITY CANVAS ── */
+#ag-canvas{position:fixed;inset:0;z-index:1;pointer-events:none;}
+
+/* ── CURSOR ── */
+#cursor{width:10px;height:10px;border-radius:50%;background:var(--amber);position:fixed;top:0;left:0;pointer-events:none;z-index:9999;mix-blend-mode:difference;transition:width .2s,height .2s,border-radius .2s,background .2s;}
+#cursor-trail{width:30px;height:30px;border-radius:50%;border:1px solid rgba(240,165,0,.4);position:fixed;top:0;left:0;pointer-events:none;z-index:9998;transition:width .3s,height .3s,border-color .3s,transform .35s ease;}
+#cursor.on-link{width:8px;height:8px;background:var(--amber2);}
+#cursor-trail.on-link{width:50px;height:50px;border-color:rgba(255,201,60,.6);}
+
+/* ── STAGE & SCENES ── */
+#stage{position:fixed;inset:0;z-index:10;overflow:hidden;}
+.scene{
+  position:absolute;inset:0;
+  background:var(--bg);
+  transform:translateX(100%);
+  transition:transform var(--transition-dur) var(--transition-ease);
+  overflow:hidden;
+  display:flex;flex-direction:column;justify-content:center;
+  padding:7vh 8vw 12vh;
 }
-.pupil{
- width:10px;height:10px;background:black;border-radius:50%;margin:auto;margin-top:5px;
+.scene.scene-active{transform:translateX(0)!important;}
+.scene.scene-past{transform:translateX(-100%)!important;}
+.scene.no-transition{transition:none!important;}
+
+/* ── CHAPTER CARD ── */
+#chapter-card{
+  position:fixed;inset:0;z-index:9960;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;gap:.6rem;
+  pointer-events:none;background:var(--bg);
+  clip-path:inset(0 100% 0 0);transition:clip-path 0s;
+}
+#chapter-card.cc-enter{clip-path:inset(0 0% 0 0);transition:clip-path .45s var(--transition-ease);}
+#chapter-card.cc-exit{clip-path:inset(0 0% 0 100%);transition:clip-path .45s var(--transition-ease) .05s;}
+.cc-eyebrow{font-family:var(--font-mono);font-size:.6rem;letter-spacing:.5em;color:var(--amber);text-transform:uppercase;}
+.cc-title{font-family:var(--font-display);font-size:clamp(3rem,9vw,7rem);color:var(--white);letter-spacing:.04em;text-align:center;line-height:1;}
+.cc-line{width:60px;height:1px;background:var(--amber);margin-top:.5rem;}
+
+/* ── BOTTOM CONTROLS ── */
+#controls{
+  position:fixed;bottom:0;left:0;right:0;height:9vh;z-index:9980;
+  background:rgba(6,10,15,.95);border-top:1px solid rgba(58,79,106,.3);
+  backdrop-filter:blur(10px);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 3vw;gap:1rem;
+}
+.ctrl-btn{
+  font-family:var(--font-mono);font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;
+  background:transparent;border:1px solid var(--muted);color:var(--steel);
+  padding:.5rem 1.2rem;cursor:none;
+  transition:all .2s;white-space:nowrap;
+}
+.ctrl-btn:hover,.ctrl-btn.active{border-color:var(--amber);color:var(--amber);background:rgba(240,165,0,.07);}
+.ctrl-btn.danger{border-color:var(--red);color:var(--red);}
+.ctrl-btn.danger:hover,.ctrl-btn.danger.active{background:rgba(224,92,92,.07);}
+#ctrl-prev,#ctrl-next{font-size:.8rem;padding:.5rem 1.6rem;border-color:var(--muted);}
+#ctrl-next:hover{border-color:var(--amber);color:var(--amber);}
+#ctrl-prev:hover{border-color:var(--steel);color:var(--steel);}
+#ctrl-next.pulse{animation:btnPulse 2s ease-in-out infinite;}
+@keyframes btnPulse{0%,100%{box-shadow:0 0 0 0 rgba(240,165,0,0)}50%{box-shadow:0 0 0 6px rgba(240,165,0,.2)}}
+
+/* Frame counter */
+#frame-counter{
+  display:flex;align-items:center;gap:1.5rem;flex:1;justify-content:center;
+}
+.frame-dots{display:flex;gap:.4rem;align-items:center;}
+.fdot{width:4px;height:4px;border-radius:50%;background:var(--muted);transition:all .3s;}
+.fdot.active{background:var(--amber);transform:scale(1.6);box-shadow:0 0 6px var(--amber);}
+.fdot.past{background:rgba(240,165,0,.4);}
+#frame-label{font-family:var(--font-mono);font-size:.55rem;letter-spacing:.3em;color:var(--steel);white-space:nowrap;}
+
+/* ── HAND TRACKING PANEL ── */
+#hand-panel{
+  position:fixed;bottom:10vh;right:1.5rem;z-index:9975;
+  background:rgba(6,10,15,.95);border:1px solid rgba(58,79,106,.4);
+  backdrop-filter:blur(16px);padding:1rem 1.2rem;
+  width:220px;opacity:0;transform:translateY(20px);
+  transition:opacity .4s,transform .4s;pointer-events:none;
+}
+#hand-panel.visible{opacity:1;transform:translateY(0);pointer-events:all;}
+.hp-title{font-family:var(--font-mono);font-size:.5rem;letter-spacing:.4em;color:var(--amber);text-transform:uppercase;margin-bottom:.8rem;}
+#hand-video-wrap{position:relative;width:100%;aspect-ratio:4/3;background:#000;overflow:hidden;margin-bottom:.8rem;}
+#hand-video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);opacity:.7;}
+#hand-canvas-overlay{position:absolute;inset:0;transform:scaleX(-1);}
+.hp-gesture{font-family:var(--font-mono);font-size:.6rem;color:var(--text);display:flex;justify-content:space-between;}
+.hp-gesture span:last-child{color:var(--amber2);}
+#gesture-feedback{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-family:var(--font-display);font-size:clamp(2rem,5vw,4rem);
+  color:var(--amber);letter-spacing:.1em;z-index:9985;
+  pointer-events:none;opacity:0;transition:opacity .3s;
+}
+#gesture-feedback.show{opacity:1;}
+
+/* ── ANTI-GRAVITY HUD ── */
+#ag-hud{
+  position:fixed;top:5vh;left:2vw;z-index:9970;
+  font-family:var(--font-mono);font-size:.5rem;letter-spacing:.15em;
+  color:var(--muted);line-height:2;pointer-events:none;
+  opacity:0;transition:opacity .5s;
+}
+#ag-hud.visible{opacity:1;}
+.ag-line span{color:var(--amber);}
+
+/* ── SCENE COMMON ── */
+.scene-label{font-family:var(--font-mono);font-size:.6rem;letter-spacing:.4em;color:var(--amber);text-transform:uppercase;margin-bottom:.8rem;}
+.scene-title{font-family:var(--font-display);font-size:clamp(3.5rem,8vw,7rem);color:var(--white);line-height:.95;margin-bottom:2.5rem;}
+.divider-line{width:60px;height:1px;background:var(--amber);margin:1.5rem 0;}
+
+/* ── LOADER ── */
+#loader{position:fixed;inset:0;z-index:9990;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.4rem;}
+.loader-text{font-family:var(--font-display);font-size:5rem;color:var(--amber);letter-spacing:.1em;opacity:0;animation:fadeUp .6s forwards .2s;}
+.loader-sub{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.4em;color:var(--steel);text-transform:uppercase;opacity:0;animation:fadeUp .6s forwards .6s;}
+.loader-bar-wrap{width:300px;height:2px;background:var(--muted);position:relative;overflow:hidden;}
+.loader-bar{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--amber);animation:loadBar 2.2s ease forwards .5s;}
+@keyframes loadBar{to{width:100%}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── SCENE 0: HERO ── */
+#scene-0{background:var(--bg);}
+#hero-canvas{position:absolute;inset:0;z-index:0;}
+.hero-tag{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.3em;color:var(--amber);text-transform:uppercase;z-index:2;position:relative;margin-bottom:1rem;}
+.hero-name{font-family:var(--font-display);font-size:clamp(5rem,14vw,12rem);line-height:.88;color:var(--white);letter-spacing:.02em;z-index:2;position:relative;}
+.hero-name span{color:var(--amber);display:block;}
+.hero-sub{margin-top:1.5rem;font-family:var(--font-serif);font-style:italic;font-size:clamp(1rem,2vw,1.5rem);color:var(--steel);z-index:2;position:relative;max-width:520px;}
+.hero-sub em{color:var(--amber);}
+.hero-cta{margin-top:2.5rem;display:flex;gap:1.2rem;z-index:2;position:relative;}
+.btn{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;padding:.85rem 2.2rem;border:1px solid var(--amber);color:var(--amber);background:transparent;text-decoration:none;cursor:none;transition:background .3s,color .3s,box-shadow .3s;display:inline-block;}
+.btn:hover{background:var(--amber);color:var(--bg);box-shadow:0 0 30px rgba(240,165,0,.3);}
+.btn.solid{background:var(--amber);color:var(--bg);}
+.btn.solid:hover{background:transparent;color:var(--amber);}
+.hero-scroll-prompt{position:absolute;bottom:12vh;left:50%;transform:translateX(-50%);z-index:2;display:flex;flex-direction:column;align-items:center;gap:.5rem;animation:floatUp 2s ease-in-out infinite;}
+.hero-scroll-prompt span{font-size:.55rem;letter-spacing:.35em;color:var(--muted);text-transform:uppercase;}
+@keyframes floatUp{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-8px)}}
+
+/* ── SCENE 1: ABOUT ── */
+#scene-1{display:grid;grid-template-columns:1.1fr 1fr;gap:5vw;background:var(--bg2);}
+.globe-wrap{position:relative;width:100%;aspect-ratio:1;max-height:65vh;max-width:65vh;margin:auto;}
+#globe-canvas{width:100%;height:100%;border-radius:50%;}
+.location-badge{position:absolute;font-family:var(--font-mono);font-size:.6rem;letter-spacing:.1em;padding:.4rem .9rem;border:1px solid var(--amber);color:var(--amber);background:rgba(6,10,15,.85);backdrop-filter:blur(10px);}
+.badge-chicago{top:20%;right:-5%;}
+.badge-mumbai{bottom:25%;left:-5%;}
+.story-text{font-family:var(--font-serif);font-size:clamp(1rem,1.6vw,1.3rem);line-height:1.9;color:var(--text);}
+.story-text em{color:var(--amber);font-style:italic;}
+.tool-pill{display:inline-block;font-family:var(--font-mono);font-size:.55rem;letter-spacing:.15em;padding:.25rem .7rem;border:1px solid rgba(58,79,106,.5);color:var(--steel);margin:.2rem .2rem 0 0;transition:border-color .2s,color .2s;}
+.tool-pill:hover{border-color:var(--amber);color:var(--amber);}
+.tools-bar{margin-top:1.5rem;}
+
+/* ── SCENE 2: NUMBERS ── */
+#scene-2{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;padding:0;background:var(--muted);}
+.stat-card{background:var(--bg);padding:0 3vw;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;position:relative;overflow:hidden;transition:background .3s;}
+.stat-card:hover{background:var(--bg2);}
+.stat-num{font-family:var(--font-display);font-size:clamp(3.5rem,7vw,6rem);color:var(--amber);line-height:1;}
+.stat-label{font-family:var(--font-mono);font-size:.62rem;letter-spacing:.15em;color:var(--steel);margin-top:.6rem;text-transform:uppercase;max-width:220px;}
+.stat-bg-num{position:absolute;right:-1rem;bottom:-1rem;font-family:var(--font-display);font-size:10rem;color:rgba(240,165,0,.03);line-height:1;pointer-events:none;user-select:none;}
+
+/* ── SCENES 3-7: EXPERIENCE ── */
+.exp-scene{display:grid;grid-template-columns:.8fr 1.4fr;gap:0;align-items:center;}
+.exp-left{padding-right:4vw;border-right:1px solid rgba(58,79,106,.3);}
+.exp-num{font-family:var(--font-display);font-size:clamp(5rem,12vw,10rem);color:rgba(240,165,0,.08);line-height:1;margin-bottom:-1.5rem;}
+.exp-badge{display:inline-block;font-family:var(--font-mono);font-size:.5rem;letter-spacing:.2em;color:var(--amber);border:1px solid rgba(240,165,0,.25);padding:.2rem .6rem;text-transform:uppercase;margin-bottom:1rem;}
+.exp-title{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.8rem);color:var(--white);line-height:1;margin-bottom:.4rem;}
+.exp-company{font-family:var(--font-serif);font-style:italic;font-size:clamp(.85rem,1.4vw,1rem);color:var(--steel);margin-bottom:1.5rem;}
+.exp-right{padding-left:4vw;}
+.exp-bullets{list-style:none;display:flex;flex-direction:column;gap:1.1rem;}
+.exp-bullets li{font-family:var(--font-mono);font-size:.65rem;line-height:1.8;color:var(--text);padding-left:1.2rem;position:relative;}
+.exp-bullets li::before{content:'›';position:absolute;left:0;color:var(--amber);}
+.highlight{color:var(--amber2);font-weight:600;}
+.exp-chapter-tag{font-family:var(--font-mono);font-size:.5rem;letter-spacing:.4em;color:var(--muted);text-transform:uppercase;margin-bottom:2rem;}
+.exp-progress{display:flex;gap:.5rem;margin-top:2.5rem;align-items:center;}
+.ep-dot{width:6px;height:6px;border-radius:50%;background:var(--muted);transition:background .3s,transform .3s;}
+.ep-dot.active{background:var(--amber);transform:scale(1.4);}
+.ep-dot.past{background:rgba(240,165,0,.4);}
+.case-study-tag{display:inline-flex;align-items:center;gap:.5rem;margin-top:1.5rem;font-family:var(--font-mono);font-size:.55rem;letter-spacing:.2em;color:var(--amber);border:none;background:transparent;cursor:none;text-transform:uppercase;padding:0;border-bottom:1px solid rgba(240,165,0,.3);padding-bottom:.2rem;}
+
+/* ── SCENE 8: SKILLS ── */
+#scene-8{background:var(--bg2);}
+.skills-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2.5vw;margin-top:1rem;}
+.skill-group-title{font-family:var(--font-mono);font-size:.55rem;letter-spacing:.3em;color:var(--amber);text-transform:uppercase;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid rgba(58,79,106,.3);}
+.skill-tag{display:inline-block;font-family:var(--font-mono);font-size:.55rem;letter-spacing:.12em;padding:.25rem .7rem;border:1px solid rgba(58,79,106,.5);color:var(--steel);margin:.2rem .2rem 0 0;cursor:none;transition:all .2s;}
+.skill-tag:hover{border-color:var(--amber);color:var(--amber);background:rgba(240,165,0,.05);}
+
+/* ── SCENE 9: EDUCATION ── */
+#scene-9{display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:0;background:var(--muted);}
+.edu-card{background:var(--bg);padding:6vh 4vw;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden;}
+.edu-card:nth-child(2){background:var(--bg2);}
+.edu-degree{font-family:var(--font-display);font-size:clamp(1.5rem,3vw,2.5rem);color:var(--amber);margin-bottom:.5rem;}
+.edu-school{font-family:var(--font-display);font-size:clamp(2.5rem,5vw,4rem);color:var(--white);line-height:1;margin-bottom:1rem;}
+.edu-meta{font-family:var(--font-mono);font-size:.6rem;letter-spacing:.15em;color:var(--steel);}
+.edu-bg{position:absolute;right:-2rem;bottom:-2rem;font-family:var(--font-display);font-size:12rem;color:rgba(240,165,0,.025);line-height:1;pointer-events:none;}
+
+/* ── SCENE 10: CERTS ── */
+#scene-10{background:var(--bg);}
+.cert-list{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(58,79,106,.2);margin-top:1rem;}
+.cert-row{background:var(--bg);padding:1.2rem 1.5rem;display:flex;align-items:center;gap:1.2rem;transition:background .3s,border-color .3s;border-left:2px solid transparent;}
+.cert-row:hover{background:var(--bg2);border-color:var(--amber);}
+.cert-icon{font-size:1.2rem;flex-shrink:0;}
+.cert-name{font-family:var(--font-mono);font-size:.62rem;letter-spacing:.1em;color:var(--text);margin-bottom:.25rem;}
+.cert-org{font-family:var(--font-serif);font-style:italic;font-size:.8rem;color:var(--steel);}
+
+/* ── SCENE 11: JOURNEY ── */
+#scene-11{background:var(--bg2);}
+#route-canvas{width:100%;height:280px;}
+
+/* ── SCENE 12: CONTACT ── */
+#scene-12{background:var(--bg);display:grid;grid-template-columns:1fr 1fr;gap:5vw;align-items:center;}
+.contact-left{}
+.contact-right{display:flex;flex-direction:column;gap:1.5rem;}
+.contact-item{display:flex;align-items:flex-start;gap:1.2rem;padding:1.2rem;border:1px solid rgba(58,79,106,.3);background:var(--bg2);transition:border-color .3s,background .3s;cursor:none;}
+.contact-item:hover{border-color:var(--amber);background:rgba(240,165,0,.04);}
+.contact-icon{font-size:1.2rem;flex-shrink:0;}
+.contact-label{font-family:var(--font-mono);font-size:.5rem;letter-spacing:.3em;color:var(--amber);text-transform:uppercase;margin-bottom:.3rem;}
+.contact-val{font-family:var(--font-mono);font-size:.7rem;color:var(--text);}
+.contact-tagline{font-family:var(--font-serif);font-style:italic;font-size:clamp(1.2rem,2.5vw,1.8rem);color:var(--steel);line-height:1.6;margin-top:1.5rem;}
+.contact-tagline em{color:var(--amber);}
+
+/* ── MISC KEYFRAMES ── */
+@keyframes pulse{0%,100%{box-shadow:0 0 8px var(--amber)}50%{box-shadow:0 0 25px var(--amber),0 0 50px rgba(240,165,0,.25)}}
+@keyframes levitate{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.levitate{animation:levitate 3s ease-in-out infinite;}
+.levitate-fast{animation:levitate 1.5s ease-in-out infinite;}
+.levitate-slow{animation:levitate 5s ease-in-out infinite;}
+
+/* Anti-gravity mode overrides */
+body.ag-mode .scene-title,.ag-mode .hero-name{animation:levitate 4s ease-in-out infinite;}
+body.ag-mode .stat-num{animation:levitate 3.5s ease-in-out infinite;}
+body.ag-mode .exp-title{animation:levitate 4.5s ease-in-out infinite;}
+
+/* ── SCROLLBAR (hidden) ── */
+::-webkit-scrollbar{width:2px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--amber)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .exp-scene,.skills-grid,#scene-1,#scene-9,#scene-12{grid-template-columns:1fr!important;}
+  .exp-left{padding-right:0;border-right:none;border-bottom:1px solid rgba(58,79,106,.3);padding-bottom:1.5rem;margin-bottom:1.5rem;}
+  .exp-right{padding-left:0;}
+  #scene-2{grid-template-rows:repeat(4,1fr);}
+  .cert-list{grid-template-columns:1fr;}
 }
 </style>
 </head>
 <body>
-<canvas id="c"></canvas>
-<div id="overlay">
- <div class="card" id="start">
-  <h1>DON'T PLAY THIS</h1>
-  <button onclick="startGame()">Ignore Warning</button>
- </div>
+
+<!-- OVERLAYS -->
+<div id="grain"></div>
+<div class="letterbox" id="lb-top"></div>
+<div class="letterbox" id="lb-bottom"></div>
+<div id="cursor"></div>
+<div id="cursor-trail"></div>
+
+<!-- ANTI-GRAVITY BG CANVAS -->
+<canvas id="ag-canvas"></canvas>
+
+<!-- CHAPTER CARD -->
+<div id="chapter-card">
+  <div class="cc-eyebrow" id="cc-eyebrow">Chapter 01</div>
+  <div class="cc-title" id="cc-title">ORIGIN STORY</div>
+  <div class="cc-line"></div>
+</div>
+
+<!-- ANTI-GRAVITY HUD -->
+<div id="ag-hud">
+  <div class="ag-line">GRAVITY FIELD <span id="ag-grav">9.81</span> m/s²</div>
+  <div class="ag-line">PARTICLES <span id="ag-count">60</span> units</div>
+  <div class="ag-line">AI REPULSION <span id="ag-repulse">OFF</span></div>
+  <div class="ag-line">VECTOR <span id="ag-vec">↑</span></div>
+</div>
+
+<!-- GESTURE FEEDBACK -->
+<div id="gesture-feedback"></div>
+
+<!-- HAND PANEL -->
+<div id="hand-panel">
+  <div class="hp-title">◈ Hand Tracking Active</div>
+  <div id="hand-video-wrap">
+    <video id="hand-video" autoplay playsinline muted></video>
+    <canvas id="hand-canvas-overlay"></canvas>
+  </div>
+  <div class="hp-gesture"><span>Gesture:</span><span id="gesture-name">—</span></div>
+  <div class="hp-gesture" style="margin-top:.4rem"><span>Swipe →</span><span style="color:var(--steel)">next scene</span></div>
+  <div class="hp-gesture" style="margin-top:.2rem"><span>Swipe ←</span><span style="color:var(--steel)">prev scene</span></div>
+</div>
+
+<!-- ======================================================
+     STAGE — ALL SCENES
+====================================================== -->
+<div id="stage">
+
+  <!-- SCENE 0: HERO -->
+  <div class="scene scene-active" id="scene-0">
+    <canvas id="hero-canvas"></canvas>
+    <div class="hero-tag">Supply Chain · Analytics · Strategy</div>
+    <h1 class="hero-name">
+      <span id="scramble-1">TIRTHAL</span>
+      <span id="scramble-2">KOTHARI</span>
+    </h1>
+    <p class="hero-sub">
+      Connecting the dots between <em>data</em>, <em>suppliers</em>, and <em>strategy</em> —
+      one optimized chain at a time.
+    </p>
+    <div class="hero-cta">
+      <button class="btn solid" onclick="advance()">Begin the Story →</button>
+      <button class="btn" onclick="goToScene(12)">Get In Touch</button>
+    </div>
+    <div class="hero-scroll-prompt">
+      <span>Click anywhere or press → to advance</span>
+    </div>
+  </div>
+
+  <!-- SCENE 1: ABOUT -->
+  <div class="scene" id="scene-1">
+    <div style="display:flex;flex-direction:column;justify-content:center;">
+      <div class="scene-label">Chapter 01 — Origin Story</div>
+      <h2 class="scene-title">FROM<br>MUMBAI<br>TO CHICAGO</h2>
+      <p class="story-text">
+        Born in the chaos of <em>Mumbai's markets</em>, Tirthal learned supply chains
+        not in classrooms — but in the family electronics warehouse, counting inventory at 17.<br><br>
+        From <em>₹200,000 in annual savings</em> negotiated through supplier partnerships,
+        to building <em>India's first national supply chain index</em> analyzing 1,000+ companies —
+        his is a story of turning complexity into clarity.<br><br>
+        Now sharpening the blade at <em>DePaul University's Kellstadt School</em>,
+        set to graduate June 2026.
+      </p>
+      <div class="tools-bar">
+        <span class="tool-pill">R</span><span class="tool-pill">Python</span>
+        <span class="tool-pill">SQL</span><span class="tool-pill">Tableau</span>
+        <span class="tool-pill">Excel</span><span class="tool-pill">Anylogistix</span>
+        <span class="tool-pill">Lean 6σ</span><span class="tool-pill">DDMRP</span>
+        <span class="tool-pill">MRP</span>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;justify-content:center;">
+      <div class="globe-wrap">
+        <canvas id="globe-canvas" width="500" height="500"></canvas>
+        <div class="location-badge badge-chicago">📍 Chicago, IL</div>
+        <div class="location-badge badge-mumbai">📍 Mumbai, India</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCENE 2: NUMBERS -->
+  <div class="scene" id="scene-2" style="padding:0;">
+    <div class="stat-card">
+      <div class="stat-num" data-target="1000" data-suffix="+">0+</div>
+      <div class="stat-label">Companies analyzed for India's first national SCM Index</div>
+      <div class="stat-bg-num">01</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" data-target="40" data-suffix="%">0%</div>
+      <div class="stat-label">Methodology improvement in ranking accuracy</div>
+      <div class="stat-bg-num">02</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" data-target="25" data-suffix="%">0%</div>
+      <div class="stat-label">SEO traffic increase through content strategy</div>
+      <div class="stat-bg-num">03</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" data-target="150" data-suffix="+">0+</div>
+      <div class="stat-label">Students engaged as DePaul SCM Ambassador</div>
+      <div class="stat-bg-num">04</div>
+    </div>
+  </div>
+
+  <!-- SCENE 3: EXP #1 — Student Ambassador -->
+  <div class="scene exp-scene" id="scene-3">
+    <div class="exp-left">
+      <div class="exp-chapter-tag">Chapter 03 · The Grind · 01/05</div>
+      <div class="exp-num">01</div>
+      <div class="exp-badge">Feb 2025 — Present</div>
+      <div class="exp-title">Student<br>Ambassador</div>
+      <div class="exp-company">Kellstadt School of Business<br>DePaul University · Chicago, IL</div>
+      <div class="exp-progress">
+        <div class="ep-dot active"></div><div class="ep-dot"></div><div class="ep-dot"></div>
+        <div class="ep-dot"></div><div class="ep-dot"></div>
+      </div>
+    </div>
+    <div class="exp-right">
+      <ul class="exp-bullets">
+        <li>Led outreach and organized <span class="highlight">7+ events</span> using CRM tools to coordinate logistics and streamline communication.</li>
+        <li>Represented the MS-SCM program and advised <span class="highlight">100+ prospective students</span> on procurement, analytics, and logistics curriculum.</li>
+        <li>Maintained a <span class="highlight">24-hour SLA</span> for applicant communication, ensuring consistent and professional engagement.</li>
+        <li>Promoted DePaul's SCM value proposition and engaged <span class="highlight">150+ students</span> through sessions, outreach, and digital platforms.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- SCENE 4: EXP #2 — Kothari Electronics -->
+  <div class="scene exp-scene" id="scene-4">
+    <div class="exp-left">
+      <div class="exp-chapter-tag">Chapter 03 · The Grind · 02/05</div>
+      <div class="exp-num">02</div>
+      <div class="exp-badge">Jun 2021 — Jul 2024</div>
+      <div class="exp-title">Business<br>Operations &<br>SC Consultant</div>
+      <div class="exp-company">Kothari Electronics<br>Family Business · Mumbai, India</div>
+      <div class="exp-progress">
+        <div class="ep-dot past"></div><div class="ep-dot active"></div><div class="ep-dot"></div>
+        <div class="ep-dot"></div><div class="ep-dot"></div>
+      </div>
+    </div>
+    <div class="exp-right">
+      <ul class="exp-bullets">
+        <li>Managed end-to-end operations: procurement, manufacturing, QC, inventory, and wholesale distribution.</li>
+        <li>Drove strategic sourcing that achieved <span class="highlight">₹200,000 in FY24 savings</span> while strengthening supplier partnerships.</li>
+        <li>Reduced defect-related waste by salvaging and reprocessing PVC wire — generating <span class="highlight">₹30,000 annual savings</span>.</li>
+        <li>Improved demand planning and distribution to enhance order cycle efficiency and on-time delivery performance.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- SCENE 5: EXP #3 — ISC Research Analyst -->
+  <div class="scene exp-scene" id="scene-5">
+    <div class="exp-left">
+      <div class="exp-chapter-tag">Chapter 03 · The Grind · 03/05</div>
+      <div class="exp-num">03</div>
+      <div class="exp-badge">Jul 2023 — Jul 2024</div>
+      <div class="exp-title">Research<br>Analyst</div>
+      <div class="exp-company">Institute of Supply Chain Mgmt<br>Mumbai, India</div>
+      <div class="exp-progress">
+        <div class="ep-dot past"></div><div class="ep-dot past"></div><div class="ep-dot active"></div>
+        <div class="ep-dot"></div><div class="ep-dot"></div>
+      </div>
+    </div>
+    <div class="exp-right">
+      <ul class="exp-bullets">
+        <li>Analyzed <span class="highlight">1,000+ companies across 24 sectors</span> using R, Excel, and Tableau to build India's first national supply chain index.</li>
+        <li>Enhanced ranking methodology by <span class="highlight">40%</span> using ESG, sustainability, resilience, and key financial KPIs.</li>
+        <li>Authored the <span class="highlight">"Top 20 Supply Chain Champions of India"</span> report with comprehensive benchmarking insights.</li>
+        <li>Led the "Supply Chain Dialogue Series" coordinating CSCO-level speakers and high-stakes stakeholder events.</li>
+      </ul>
+      <div style="margin-top:1.5rem;padding:1rem;border:1px solid rgba(240,165,0,.2);background:rgba(240,165,0,.04);">
+        <div style="font-family:var(--font-mono);font-size:.5rem;letter-spacing:.3em;color:var(--amber);margin-bottom:.4rem;text-transform:uppercase;">★ Flagship Achievement</div>
+        <div style="font-family:var(--font-serif);font-style:italic;font-size:.9rem;color:var(--text);">India's first comprehensive supply chain performance index — ranking 1,000+ companies across 24 industries using a weighted multi-criteria methodology.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCENE 6: EXP #4 — Career Launcher -->
+  <div class="scene exp-scene" id="scene-6">
+    <div class="exp-left">
+      <div class="exp-chapter-tag">Chapter 03 · The Grind · 04/05</div>
+      <div class="exp-num">04</div>
+      <div class="exp-badge">Feb 2023 — Apr 2023</div>
+      <div class="exp-title">Content &<br>Social Media<br>Intern</div>
+      <div class="exp-company">Career Launcher<br>Mumbai, India</div>
+      <div class="exp-progress">
+        <div class="ep-dot past"></div><div class="ep-dot past"></div><div class="ep-dot past"></div>
+        <div class="ep-dot active"></div><div class="ep-dot"></div>
+      </div>
+    </div>
+    <div class="exp-right">
+      <ul class="exp-bullets">
+        <li>Produced SEO content increasing website traffic by <span class="highlight">25%</span> and session time by <span class="highlight">40%</span> within three months.</li>
+        <li>Grew Instagram following by <span class="highlight">10,000+ organically</span> through trend-based content and consistent posting strategy.</li>
+        <li>Developed high-performing Instagram scripts and themes, improving organic reach and brand visibility.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- SCENE 7: EXP #5 — Mentone Concretes -->
+  <div class="scene exp-scene" id="scene-7">
+    <div class="exp-left">
+      <div class="exp-chapter-tag">Chapter 03 · The Grind · 05/05</div>
+      <div class="exp-num">05</div>
+      <div class="exp-badge">May 2022 — Jul 2022</div>
+      <div class="exp-title">Supply<br>Chain<br>Intern</div>
+      <div class="exp-company">Mentone Concretes<br>Mumbai, India</div>
+      <div class="exp-progress">
+        <div class="ep-dot past"></div><div class="ep-dot past"></div><div class="ep-dot past"></div>
+        <div class="ep-dot past"></div><div class="ep-dot active"></div>
+      </div>
+    </div>
+    <div class="exp-right">
+      <ul class="exp-bullets">
+        <li>Evaluated supplier performance using scorecards, removing two low-performing vendors to improve procurement efficiency.</li>
+        <li>Used MRP to prevent stockouts of OPC 53 Grade Cement, increasing material availability by <span class="highlight">30%</span>.</li>
+        <li>Scheduled outbound logistics and tracked <span class="highlight">20+ weekly shipments</span> to maintain on-time deliveries to 10+ project sites.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- SCENE 8: SKILLS -->
+  <div class="scene" id="scene-8">
+    <div class="scene-label">Chapter 04 — Toolkit</div>
+    <h2 class="scene-title">SKILLS &<br>EXPERTISE</h2>
+    <div class="skills-grid">
+      <div>
+        <div class="skill-group-title">⚙ Core Supply Chain</div>
+        <span class="skill-tag">Supply Chain Optimization</span><span class="skill-tag">Strategic Procurement</span>
+        <span class="skill-tag">Supplier Evaluation</span><span class="skill-tag">Inventory Management</span>
+        <span class="skill-tag">Demand Planning</span><span class="skill-tag">Logistics Coordination</span>
+        <span class="skill-tag">Risk Analysis</span><span class="skill-tag">Cost Reduction</span>
+        <span class="skill-tag">DDMRP</span><span class="skill-tag">ESG Integration</span>
+        <span class="skill-tag">Vendor Relations</span><span class="skill-tag">CRM</span>
+      </div>
+      <div>
+        <div class="skill-group-title">💻 Technical Skills</div>
+        <span class="skill-tag">R</span><span class="skill-tag">Python</span>
+        <span class="skill-tag">SQL</span><span class="skill-tag">Microsoft Excel</span>
+        <span class="skill-tag">Tableau</span><span class="skill-tag">Anylogistix</span>
+        <span class="skill-tag">Slate</span><span class="skill-tag">Statistical Analysis</span>
+        <span class="skill-tag">MRP Systems</span><span class="skill-tag">Data Visualization</span>
+        <span class="skill-tag">SEO Analytics</span>
+      </div>
+      <div>
+        <div class="skill-group-title">🤝 Soft Skills</div>
+        <span class="skill-tag">Stakeholder Management</span><span class="skill-tag">Cross-functional Collaboration</span>
+        <span class="skill-tag">Executive Communication</span><span class="skill-tag">Negotiation</span>
+        <span class="skill-tag">Team Leadership</span><span class="skill-tag">Strategic Planning</span>
+        <span class="skill-tag">Critical Thinking</span><span class="skill-tag">Research & Analysis</span>
+        <span class="skill-tag">Adaptability</span><span class="skill-tag">Influence & Persuasion</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCENE 9: EDUCATION -->
+  <div class="scene" id="scene-9" style="padding:0;">
+    <div class="edu-card">
+      <div class="scene-label" style="margin-bottom:1.5rem;">Chapter 05 — Education</div>
+      <div class="edu-degree">Master of Science</div>
+      <div class="edu-school">DePaul<br>University</div>
+      <div class="edu-meta" style="margin-top:1rem;">Kellstadt Graduate School of Business<br>Supply Chain Management · Chicago, IL · June 2026</div>
+      <div class="edu-bg">MS</div>
+    </div>
+    <div class="edu-card">
+      <div class="scene-label" style="margin-bottom:1.5rem;opacity:0;">·</div>
+      <div class="edu-degree">Bachelor's Degree</div>
+      <div class="edu-school">Mumbai<br>University</div>
+      <div class="edu-meta" style="margin-top:1rem;">Management Studies<br>Specialized in E-Commerce Operations · Mumbai, India</div>
+      <div class="edu-bg">BBA</div>
+    </div>
+  </div>
+
+  <!-- SCENE 10: CERTS -->
+  <div class="scene" id="scene-10">
+    <div class="scene-label">Chapter 06 — Credentials</div>
+    <h2 class="scene-title">CERTIFI-<br>CATIONS</h2>
+    <div class="cert-list">
+      <div class="cert-row">
+        <span class="cert-icon">✈</span>
+        <div><div class="cert-name">Certified Supply Chain Professional (CSCP) — In Progress</div><div class="cert-org">APICS / Association for Supply Chain Management</div></div>
+      </div>
+      <div class="cert-row">
+        <span class="cert-icon">📊</span>
+        <div><div class="cert-name">Excel: Advanced Formulas & Functions</div><div class="cert-org">LinkedIn Learning</div></div>
+      </div>
+      <div class="cert-row">
+        <span class="cert-icon">🔗</span>
+        <div><div class="cert-name">Supply Chain Fundamentals</div><div class="cert-org">MITx / edX</div></div>
+      </div>
+      <div class="cert-row">
+        <span class="cert-icon">📐</span>
+        <div><div class="cert-name">Lean Six Sigma White Belt</div><div class="cert-org">CSSC · Council for Six Sigma Certification</div></div>
+      </div>
+      <div class="cert-row">
+        <span class="cert-icon">🐍</span>
+        <div><div class="cert-name">Python for Data Science</div><div class="cert-org">IBM / Coursera</div></div>
+      </div>
+      <div class="cert-row">
+        <span class="cert-icon">📈</span>
+        <div><div class="cert-name">Tableau Desktop Specialist</div><div class="cert-org">Tableau / Salesforce</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCENE 11: JOURNEY -->
+  <div class="scene" id="scene-11">
+    <div class="scene-label">Chapter 07 — The Route</div>
+    <h2 class="scene-title">THE<br>JOURNEY</h2>
+    <canvas id="route-canvas"></canvas>
+  </div>
+
+  <!-- SCENE 12: CONTACT -->
+  <div class="scene" id="scene-12">
+    <div class="contact-left">
+      <div class="scene-label">Chapter 08 — Connect</div>
+      <h2 class="scene-title">LET'S<br>BUILD<br>TOGETHER</h2>
+      <p class="contact-tagline">
+        Open to <em>full-time roles</em> in supply chain, procurement, and analytics.<br>
+        Available from <em>June 2026</em>.
+      </p>
+    </div>
+    <div class="contact-right">
+      <div class="contact-item">
+        <span class="contact-icon">📧</span>
+        <div><div class="contact-label">Email</div><div class="contact-val">tirthal.kothari@gmail.com</div></div>
+      </div>
+      <div class="contact-item">
+        <span class="contact-icon">💼</span>
+        <div><div class="contact-label">LinkedIn</div><div class="contact-val">linkedin.com/in/tirthalkothari</div></div>
+      </div>
+      <div class="contact-item">
+        <span class="contact-icon">📍</span>
+        <div><div class="contact-label">Location</div><div class="contact-val">Chicago, IL — Open to Relocation</div></div>
+      </div>
+      <div class="contact-item">
+        <span class="contact-icon">🎓</span>
+        <div><div class="contact-label">Currently</div><div class="contact-val">MS-SCM · DePaul University · Graduating June 2026</div></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end stage -->
+
+<!-- BOTTOM CONTROLS -->
+<div id="controls">
+  <button class="ctrl-btn" id="ctrl-prev" onclick="retreat()">← PREV</button>
+
+  <div id="frame-counter">
+    <div class="frame-dots" id="frame-dots"></div>
+    <span id="frame-label">INTRO · 01 / 13</span>
+  </div>
+
+  <button class="ctrl-btn" id="ctrl-ag" onclick="toggleAntiGravity()" title="Toggle Anti-Gravity AI">
+    🚀 ANTI-G AI
+  </button>
+  <button class="ctrl-btn" id="ctrl-hand" onclick="toggleHandTracking()" title="Toggle Hand Tracking">
+    🖐 HANDS
+  </button>
+
+  <button class="ctrl-btn pulse" id="ctrl-next" onclick="advance()">NEXT →</button>
+</div>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="loader-text">TK</div>
+  <div class="loader-sub">Loading Cinematic Portfolio</div>
+  <div class="loader-bar-wrap"><div class="loader-bar"></div></div>
 </div>
 
 <script>
-const canvas=document.getElementById('c');
-const ctx=canvas.getContext('2d');
-let W,H;function resize(){W=canvas.width=innerWidth;H=canvas.height=innerHeight}resize();addEventListener('resize',resize);
+/* ============================================================
+   SCENE DATA
+============================================================ */
+const SCENE_DATA = [
+  { name: 'Intro',      chapter: null,   chTitle: null },
+  { name: 'Origin',     chapter: '01',   chTitle: 'ORIGIN STORY' },
+  { name: 'Numbers',    chapter: '02',   chTitle: 'BY THE NUMBERS' },
+  { name: 'Exp 01/05',  chapter: '03',   chTitle: 'THE GRIND' },
+  { name: 'Exp 02/05',  chapter: null,   chTitle: null },
+  { name: 'Exp 03/05',  chapter: null,   chTitle: null },
+  { name: 'Exp 04/05',  chapter: null,   chTitle: null },
+  { name: 'Exp 05/05',  chapter: null,   chTitle: null },
+  { name: 'Toolkit',    chapter: '04',   chTitle: 'TOOLKIT' },
+  { name: 'Education',  chapter: '05',   chTitle: 'EDUCATION' },
+  { name: 'Certs',      chapter: '06',   chTitle: 'CREDENTIALS' },
+  { name: 'Journey',    chapter: '07',   chTitle: 'THE ROUTE' },
+  { name: 'Connect',    chapter: '08',   chTitle: 'CONNECT' },
+];
+const TOTAL = SCENE_DATA.length;
+let current = 0;
+let transitioning = false;
+let globeInited = false, routeInited = false;
 
-let state='start',loop=0,frozen=false;
-let player={x:200,y:200};
-let items=[];
+/* ============================================================
+   SCENE NAVIGATION
+============================================================ */
+function getSceneEl(i) { return document.getElementById('scene-' + i); }
 
-function speak(text){
- const u=new SpeechSynthesisUtterance(text);
- u.pitch=0.4;u.rate=0.6;
- speechSynthesis.speak(u);
-}
+function advance() { if (current < TOTAL - 1) goToScene(current + 1, 1); }
+function retreat() { if (current > 0) goToScene(current - 1, -1); }
 
-function spawn(){items=[];for(let i=0;i<6;i++){items.push({x:Math.random()*W,y:Math.random()*H,done:false})}}
+function goToScene(newIdx, dir) {
+  if (newIdx < 0 || newIdx >= TOTAL) return;
+  if (newIdx === current) return;
+  if (transitioning) return;
+  if (dir === undefined) dir = newIdx > current ? 1 : -1;
 
-function startGame(){
- document.getElementById('overlay').innerHTML="";
- state='play';loop=1;spawn();
- haunting();
-}
-
-function draw(){
- if(frozen){requestAnimationFrame(draw);return;}
- ctx.fillStyle='rgba(0,0,0,0.4)';ctx.fillRect(0,0,W,H);
- if(state==='play'){
-  ctx.fillStyle='white';ctx.beginPath();ctx.arc(player.x,player.y,8,0,Math.PI*2);ctx.fill();
-  items.forEach(i=>{if(!i.done){ctx.fillStyle='red';ctx.beginPath();ctx.arc(i.x,i.y,6,0,Math.PI*2);ctx.fill();}});
-  if(items.every(i=>i.done)){
-    loop++;
-    if(loop<=3){spawn(); haunting();}
-    else ending();
+  const chapterInfo = SCENE_DATA[newIdx].chapter;
+  if (chapterInfo && dir > 0) {
+    showChapterCard(SCENE_DATA[newIdx].chapter, SCENE_DATA[newIdx].chTitle, () => {
+      doTransition(newIdx, dir);
+    });
+  } else {
+    doTransition(newIdx, dir);
   }
- }
- requestAnimationFrame(draw);
 }
 
-draw();
+function doTransition(newIdx, dir) {
+  transitioning = true;
+  const oldEl = getSceneEl(current);
+  const newEl = getSceneEl(newIdx);
 
-addEventListener('pointermove',e=>{
- if(frozen) return;
- player.x=e.clientX;player.y=e.clientY;
- items.forEach(i=>{if(!i.done && Math.hypot(player.x-i.x,player.y-i.y)<12)i.done=true});
+  // Position new scene off-screen (no transition)
+  newEl.classList.add('no-transition');
+  newEl.classList.remove('scene-active', 'scene-past');
+  newEl.style.transform = dir > 0 ? 'translateX(100%)' : 'translateX(-100%)';
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      newEl.classList.remove('no-transition');
+      // Animate both
+      oldEl.style.transform = dir > 0 ? 'translateX(-100%)' : 'translateX(100%)';
+      newEl.style.transform = 'translateX(0)';
+      newEl.classList.add('scene-active');
+      oldEl.classList.remove('scene-active');
+
+      current = newIdx;
+      updateControls();
+      onSceneEnter(newIdx);
+
+      setTimeout(() => {
+        transitioning = false;
+        // Clean up transforms for all non-active scenes
+        for (let i = 0; i < TOTAL; i++) {
+          if (i !== newIdx) {
+            const el = getSceneEl(i);
+            el.classList.add('no-transition');
+            el.style.transform = i < newIdx ? 'translateX(-100%)' : 'translateX(100%)';
+            requestAnimationFrame(() => el.classList.remove('no-transition'));
+          }
+        }
+      }, 900);
+    });
+  });
+}
+
+function onSceneEnter(idx) {
+  if (idx === 1 && !globeInited) { initGlobe(); globeInited = true; }
+  if (idx === 11 && !routeInited) { initRoute(); routeInited = true; }
+  if (idx === 2) animateStats();
+}
+
+/* ============================================================
+   CHAPTER CARD
+============================================================ */
+const ccEl = document.getElementById('chapter-card');
+const ccEyebrow = document.getElementById('cc-eyebrow');
+const ccTitle = document.getElementById('cc-title');
+
+function showChapterCard(chapter, title, cb) {
+  ccEyebrow.textContent = 'Chapter ' + chapter;
+  ccTitle.textContent = title;
+  ccEl.classList.remove('cc-exit');
+  ccEl.classList.add('cc-enter');
+  setTimeout(() => {
+    ccEl.classList.remove('cc-enter');
+    ccEl.classList.add('cc-exit');
+    setTimeout(() => { ccEl.classList.remove('cc-exit'); cb && cb(); }, 500);
+  }, 950);
+}
+
+/* ============================================================
+   CONTROLS UPDATE
+============================================================ */
+function updateControls() {
+  const d = SCENE_DATA[current];
+  document.getElementById('frame-label').textContent =
+    d.name.toUpperCase() + ' · ' + String(current + 1).padStart(2,'0') + ' / ' + TOTAL;
+
+  // Dots
+  const dotsEl = document.getElementById('frame-dots');
+  dotsEl.innerHTML = '';
+  for (let i = 0; i < TOTAL; i++) {
+    const d = document.createElement('div');
+    d.className = 'fdot' + (i === current ? ' active' : i < current ? ' past' : '');
+    d.title = SCENE_DATA[i].name;
+    d.addEventListener('click', () => goToScene(i));
+    d.style.cursor = 'pointer';
+    dotsEl.appendChild(d);
+  }
+
+  document.getElementById('ctrl-prev').style.opacity = current === 0 ? '.3' : '1';
+  document.getElementById('ctrl-next').style.opacity = current === TOTAL-1 ? '.3' : '1';
+}
+
+/* ============================================================
+   ANTI-GRAVITY PARTICLE SYSTEM
+============================================================ */
+const agCanvas = document.getElementById('ag-canvas');
+const agCtx = agCanvas.getContext('2d');
+let agParticles = [];
+let agMode = false;
+let agGravity = -0.04; // negative = upward
+let agMouse = { x: -999, y: -999 };
+
+function resizeAG() {
+  agCanvas.width = window.innerWidth;
+  agCanvas.height = window.innerHeight;
+}
+resizeAG();
+window.addEventListener('resize', resizeAG);
+
+function createParticle() {
+  return {
+    x: Math.random() * agCanvas.width,
+    y: agCanvas.height + Math.random() * 200,
+    vx: (Math.random() - 0.5) * 0.6,
+    vy: -(Math.random() * 1.5 + 0.3),
+    size: Math.random() * 2.5 + 0.4,
+    opacity: Math.random() * 0.5 + 0.1,
+    life: 0,
+    maxLife: Math.random() * 300 + 150,
+    hue: Math.random() > 0.85 ? 200 : 38, // mostly amber, some blue
+  };
+}
+
+for (let i = 0; i < 70; i++) {
+  const p = createParticle();
+  p.y = Math.random() * agCanvas.height;
+  p.life = Math.random() * p.maxLife;
+  agParticles.push(p);
+}
+
+function drawAG() {
+  agCtx.clearRect(0, 0, agCanvas.width, agCanvas.height);
+  const speedMult = agMode ? 2.8 : 1;
+
+  agParticles.forEach((p, i) => {
+    // Mouse repulsion (anti-gravity field)
+    if (agMode) {
+      const dx = p.x - agMouse.x;
+      const dy = p.y - agMouse.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist < 120) {
+        const force = (120 - dist) / 120;
+        p.vx += (dx / dist) * force * 0.3;
+        p.vy += (dy / dist) * force * 0.3 - 0.2;
+      }
+    }
+
+    p.x += p.vx * speedMult;
+    p.vy += agGravity * speedMult;
+    p.vy = Math.max(p.vy, -3.5);
+    p.y += p.vy * speedMult;
+
+    // Slight horizontal drift
+    p.vx += (Math.random() - 0.5) * 0.02;
+    p.vx *= 0.99;
+
+    p.life++;
+    const lifeRatio = p.life / p.maxLife;
+    const alpha = p.opacity * Math.sin(lifeRatio * Math.PI);
+
+    agCtx.beginPath();
+    agCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    if (p.hue === 38) {
+      agCtx.fillStyle = `rgba(240,165,0,${alpha})`;
+    } else {
+      agCtx.fillStyle = `rgba(139,167,199,${alpha * 0.6})`;
+    }
+    agCtx.fill();
+
+    // Glow for larger particles in AG mode
+    if (agMode && p.size > 1.8) {
+      agCtx.beginPath();
+      agCtx.arc(p.x, p.y, p.size * 3, 0, Math.PI * 2);
+      agCtx.fillStyle = `rgba(240,165,0,${alpha * 0.08})`;
+      agCtx.fill();
+    }
+
+    if (p.life >= p.maxLife || p.y < -20) {
+      agParticles[i] = createParticle();
+    }
+  });
+
+  // AG mode: draw field lines
+  if (agMode) {
+    const cols = 8, rows = 5;
+    const cw = agCanvas.width / cols;
+    const ch = agCanvas.height / rows;
+    agCtx.strokeStyle = 'rgba(240,165,0,0.04)';
+    agCtx.lineWidth = 1;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const fx = c * cw + cw/2;
+        const fy = r * ch + ch/2;
+        agCtx.beginPath();
+        agCtx.moveTo(fx, fy);
+        agCtx.lineTo(fx, fy - 20);
+        agCtx.stroke();
+        agCtx.beginPath();
+        agCtx.arc(fx, fy - 22, 3, 0, Math.PI * 2);
+        agCtx.fillStyle = 'rgba(240,165,0,0.06)';
+        agCtx.fill();
+      }
+    }
+  }
+
+  requestAnimationFrame(drawAG);
+}
+drawAG();
+
+function toggleAntiGravity() {
+  agMode = !agMode;
+  document.body.classList.toggle('ag-mode', agMode);
+  document.getElementById('ctrl-ag').classList.toggle('active', agMode);
+  document.getElementById('ag-hud').classList.toggle('visible', agMode);
+  document.getElementById('ag-repulse').textContent = agMode ? 'ACTIVE' : 'OFF';
+  document.getElementById('ag-grav').textContent = agMode ? '0.00' : '9.81';
+  document.getElementById('ag-vec').textContent = agMode ? '↑↑↑' : '↑';
+  if (agMode) {
+    agParticles.forEach(p => { p.vy -= 1; });
+    // Speak (optional)
+    if (window.speechSynthesis) {
+      const u = new SpeechSynthesisUtterance("Anti-gravity field active");
+      u.volume = 0.4; u.rate = 0.9; u.pitch = 0.8;
+      speechSynthesis.speak(u);
+    }
+  }
+}
+
+document.addEventListener('mousemove', e => { agMouse.x = e.clientX; agMouse.y = e.clientY; });
+
+/* ============================================================
+   HERO CANVAS — PARTICLE NETWORK
+============================================================ */
+(function() {
+  const c = document.getElementById('hero-canvas');
+  const ctx = c.getContext('2d');
+  let pts = [];
+  function resize() { c.width = c.offsetWidth; c.height = c.offsetHeight; }
+  resize();
+  window.addEventListener('resize', resize);
+  for (let i = 0; i < 55; i++) {
+    pts.push({ x: Math.random()*c.width, y: Math.random()*c.height,
+      vx: (Math.random()-.5)*.4, vy: -(Math.random()*.3+.1) }); // upward drift
+  }
+  let mx = -1, my = -1;
+  c.parentElement.addEventListener('mousemove', e => { const r = c.getBoundingClientRect(); mx=e.clientX-r.left; my=e.clientY-r.top; });
+  function draw() {
+    ctx.clearRect(0,0,c.width,c.height);
+    pts.forEach((p,i) => {
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.x<0)p.x=c.width; if(p.x>c.width)p.x=0;
+      if(p.y<-5)p.y=c.height+5;
+      ctx.beginPath(); ctx.arc(p.x,p.y,1.5,0,Math.PI*2);
+      ctx.fillStyle='rgba(240,165,0,0.18)'; ctx.fill();
+      pts.slice(i+1).forEach(q => {
+        const dx=p.x-q.x, dy=p.y-q.y, d=Math.sqrt(dx*dx+dy*dy);
+        if(d<120) { ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y);
+          ctx.strokeStyle=`rgba(240,165,0,${.08*(1-d/120)})`; ctx.lineWidth=.5; ctx.stroke(); }
+      });
+      if(mx>0) {
+        const dx=p.x-mx,dy=p.y-my,d=Math.sqrt(dx*dx+dy*dy);
+        if(d<100){p.vx+=(dx/d)*.03;p.vy+=(dy/d)*.03;}
+      }
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ============================================================
+   NAME SCRAMBLE
+============================================================ */
+const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&';
+function scramble(el, final, dur, delay) {
+  setTimeout(() => {
+    el.style.opacity = '1';
+    let frame = 0, total = Math.round(dur/40), settle = Math.round(total*.5);
+    const t = setInterval(() => {
+      let r='';
+      for(let i=0;i<final.length;i++){
+        if(final[i]===' '){r+=' ';continue;}
+        const s=frame>settle&&(frame-settle)/(total-settle)>i/final.length;
+        r+=s?final[i]:CHARS[Math.floor(Math.random()*CHARS.length)];
+      }
+      el.textContent=r; frame++;
+      if(frame>=total){clearInterval(t);el.textContent=final;}
+    },40);
+  }, delay);
+}
+
+/* ============================================================
+   STAT COUNTERS
+============================================================ */
+function animateStats() {
+  document.querySelectorAll('.stat-num').forEach(el => {
+    const target = +el.dataset.target, suffix = el.dataset.suffix || '';
+    let cur = 0, step = target / 80;
+    const t = setInterval(() => {
+      cur = Math.min(cur + step, target);
+      el.textContent = Math.floor(cur).toLocaleString() + suffix;
+      if(cur >= target) clearInterval(t);
+    }, 20);
+  });
+}
+
+/* ============================================================
+   GLOBE
+============================================================ */
+function initGlobe() {
+  const canvas = document.getElementById('globe-canvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W=500,H=500,cx=W/2,cy=H/2,R=200;
+  let rot=0;
+  const cities=[
+    {lat:41.85,lon:-87.65,name:'Chicago'},{lat:19.08,lon:72.88,name:'Mumbai'},
+    {lat:51.5,lon:-.12,name:'London'},{lat:1.35,lon:103.82,name:'Singapore'},
+    {lat:35.68,lon:139.69,name:'Tokyo'},{lat:22.39,lon:114.1,name:'HK'},
+    {lat:40.71,lon:-74.01,name:'NYC'},{lat:48.85,lon:2.35,name:'Paris'},
+    {lat:-33.87,lon:151.21,name:'Sydney'},{lat:25.2,lon:55.27,name:'Dubai'},
+  ];
+  function latLon(lat,lon,r){const phi=(90-lat)*Math.PI/180,theta=(lon+180)*Math.PI/180;return{x:-r*Math.sin(phi)*Math.cos(theta),y:r*Math.cos(phi),z:r*Math.sin(phi)*Math.sin(theta)};}
+  function proj(p){const cr=Math.cos(rot),sr=Math.sin(rot),rx=p.x*cr-p.z*sr,rz=p.x*sr+p.z*cr;return{x:cx+rx,y:cy+p.y,z:rz};}
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    const g=ctx.createRadialGradient(cx,cy,R*.1,cx,cy,R);
+    g.addColorStop(0,'rgba(11,18,32,.9)');g.addColorStop(1,'rgba(6,10,15,.95)');
+    ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+    const a=ctx.createRadialGradient(cx,cy,R-10,cx,cy,R+20);
+    a.addColorStop(0,'rgba(240,165,0,.12)');a.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(cx,cy,R+10,0,Math.PI*2);ctx.fillStyle=a;ctx.fill();
+    for(let lat=-75;lat<=75;lat+=25){const r2=R*Math.cos(lat*Math.PI/180),yy=cy+R*Math.sin(lat*Math.PI/180);ctx.beginPath();ctx.ellipse(cx,yy,r2,r2*.15,0,0,Math.PI*2);ctx.strokeStyle='rgba(139,167,199,.1)';ctx.lineWidth=.5;ctx.stroke();}
+    for(let i=0;i<12;i++){const angle=(i/12)*Math.PI+rot;ctx.save();ctx.translate(cx,cy);ctx.rotate(angle);ctx.scale(Math.cos(angle-rot),1);ctx.beginPath();ctx.ellipse(0,0,R,R,0,0,Math.PI*2);ctx.strokeStyle='rgba(139,167,199,.07)';ctx.lineWidth=.5;ctx.stroke();ctx.restore();}
+    const proj2=cities.map(c=>{const p=latLon(c.lat,c.lon,R),pp=proj(p);return{...pp,name:c.name,vis:pp.z>0};});
+    const chicago=proj2[0],mumbai=proj2[1];
+    [chicago,mumbai].forEach(hub=>{if(!hub.vis)return;proj2.forEach(city=>{if(city===hub||!city.vis)return;const dx=city.x-hub.x,dy=city.y-hub.y,mx2=(hub.x+city.x)/2,my2=(hub.y+city.y)/2,cpx=mx2-dy*.3,cpy=my2+dx*.3;ctx.beginPath();ctx.moveTo(hub.x,hub.y);ctx.quadraticCurveTo(cpx,cpy,city.x,city.y);ctx.strokeStyle=hub===chicago?'rgba(240,165,0,.18)':'rgba(139,167,199,.12)';ctx.lineWidth=.7;ctx.stroke();});});
+    proj2.forEach(city=>{if(!city.vis)return;const isKey=city.name==='Chicago'||city.name==='Mumbai';ctx.beginPath();ctx.arc(city.x,city.y,isKey?5:2.5,0,Math.PI*2);ctx.fillStyle=isKey?'#f0a500':'rgba(240,165,0,.5)';ctx.fill();if(isKey){ctx.beginPath();ctx.arc(city.x,city.y,10,0,Math.PI*2);ctx.strokeStyle='rgba(240,165,0,.25)';ctx.lineWidth=1;ctx.stroke();}});
+    rot+=.003;requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+/* ============================================================
+   ROUTE CANVAS
+============================================================ */
+function initRoute() {
+  const canvas = document.getElementById('route-canvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth || 900, H = 280;
+  canvas.width = W; canvas.height = H;
+  const stops = [
+    {label:'Mumbai University',sub:'BBA · E-Commerce',year:'2021',x:.05},
+    {label:'Mentone Concretes',sub:'SC Intern',year:'2022',x:.2},
+    {label:'Career Launcher',sub:'Content Intern',year:'2023',x:.35},
+    {label:'ISC Management',sub:'Research Analyst',year:'2023',x:.5},
+    {label:'Kothari Electronics',sub:'Ops Consultant',year:'2021–24',x:.65},
+    {label:'DePaul University',sub:'MS-SCM',year:'2024',x:.8},
+    {label:'Ambassador',sub:'DePaul SCM',year:'2025',x:.95},
+  ];
+  const midY=H/2;let prog=0;
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.beginPath();ctx.moveTo(stops[0].x*W,midY);ctx.lineTo(stops[stops.length-1].x*W,midY);
+    ctx.strokeStyle='rgba(58,79,106,.4)';ctx.lineWidth=2;ctx.stroke();
+    if(prog<1)prog+=.006;
+    const endX=stops[0].x*W+(stops[stops.length-1].x-stops[0].x)*W*prog;
+    ctx.beginPath();ctx.moveTo(stops[0].x*W,midY);ctx.lineTo(endX,midY);
+    ctx.strokeStyle='#f0a500';ctx.lineWidth=2;ctx.stroke();
+    stops.forEach((s,i)=>{
+      const x=s.x*W,active=x<=endX,altY=i%2===0?midY-65:midY+65;
+      ctx.beginPath();ctx.moveTo(x,midY);ctx.lineTo(x,altY);
+      ctx.strokeStyle=active?'rgba(240,165,0,.3)':'rgba(58,79,106,.2)';ctx.lineWidth=1;ctx.stroke();
+      ctx.beginPath();ctx.arc(x,midY,active?6:3.5,0,Math.PI*2);
+      ctx.fillStyle=active?'#f0a500':'#3a4f6a';ctx.fill();
+      if(active){ctx.beginPath();ctx.arc(x,midY,11,0,Math.PI*2);ctx.strokeStyle='rgba(240,165,0,.2)';ctx.lineWidth=1;ctx.stroke();}
+      ctx.font=`600 11px 'JetBrains Mono',monospace`;
+      ctx.fillStyle=active?'#f0a500':'#3a4f6a';ctx.textAlign='center';
+      ctx.fillText(s.year,x,altY+(i%2===0?-32:46));
+      ctx.font=`500 9px 'JetBrains Mono',monospace`;
+      ctx.fillStyle=active?'#d4e0ee':'#3a4f6a';
+      ctx.fillText(s.label,x,altY+(i%2===0?-18:60));
+      ctx.font=`300 8px 'JetBrains Mono',monospace`;
+      ctx.fillStyle=active?'#8ba7c7':'#3a4f6a';
+      ctx.fillText(s.sub,x,altY+(i%2===0?-6:72));
+    });
+    ctx.beginPath();ctx.arc(endX,midY,4,0,Math.PI*2);ctx.fillStyle='#ffc93c';ctx.fill();
+    ctx.beginPath();ctx.arc(endX,midY,9,0,Math.PI*2);ctx.strokeStyle='rgba(255,201,60,.35)';ctx.lineWidth=1.5;ctx.stroke();
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+/* ============================================================
+   CUSTOM CURSOR
+============================================================ */
+const cur = document.getElementById('cursor');
+const trail = document.getElementById('cursor-trail');
+let curX=0,curY=0,trailX=0,trailY=0;
+document.addEventListener('mousemove',e=>{
+  curX=e.clientX;curY=e.clientY;
+  cur.style.transform=`translate(${curX-5}px,${curY-5}px)`;
+});
+(function animTrail(){
+  trailX+=(curX-trailX)*.11;trailY+=(curY-trailY)*.11;
+  trail.style.transform=`translate(${trailX-15}px,${trailY-15}px)`;
+  requestAnimationFrame(animTrail);
+})();
+document.querySelectorAll('button,.btn,.ctrl-btn,.tool-pill,.skill-tag,.contact-item,.cert-row,.fdot').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{cur.classList.add('on-link');trail.classList.add('on-link');});
+  el.addEventListener('mouseleave',()=>{cur.classList.remove('on-link');trail.classList.remove('on-link');});
 });
 
-function haunting(){
- // fake camera access
- setTimeout(()=>{
-  const overlay=document.getElementById('overlay');
-  overlay.innerHTML=`<div class="card glitch"><h1>📷 CAMERA ACCESSED</h1></div>`;
-  speak('camera accessed');
-  setTimeout(()=>overlay.innerHTML="",1200);
- },Math.random()*3000);
+/* ============================================================
+   KEYBOARD NAVIGATION
+============================================================ */
+document.addEventListener('keydown', e => {
+  if(e.key==='ArrowRight'||e.key===' ')advance();
+  else if(e.key==='ArrowLeft')retreat();
+  else if(e.key>='1'&&e.key<='9'){const i=parseInt(e.key)-1;if(i<TOTAL)goToScene(i);}
+  else if(e.key==='g'||e.key==='G')toggleAntiGravity();
+  else if(e.key==='h'||e.key==='H')toggleHandTracking();
+});
 
- // eyes appear
- setTimeout(()=>{
-  const eye=document.createElement('div');
-  eye.className='eye';
-  eye.style.left=Math.random()*W+'px';
-  eye.style.top=Math.random()*H+'px';
-  const pupil=document.createElement('div');
-  pupil.className='pupil';
-  eye.appendChild(pupil);
-  document.body.appendChild(eye);
-  setTimeout(()=>eye.remove(),800);
- },Math.random()*3000);
+// Click anywhere on stage to advance
+document.getElementById('stage').addEventListener('click', e => {
+  if(e.target.tagName==='BUTTON'||e.target.tagName==='A') return;
+  advance();
+});
 
- // random freeze
- setTimeout(()=>{
-  frozen=true;
-  speak('I see you');
-  setTimeout(()=>frozen=false,1500);
- },Math.random()*4000);
+/* ============================================================
+   HAND TRACKING — MediaPipe Hands
+============================================================ */
+let handActive = false;
+let mpHands = null, mpCamera = null;
+const handHistory = [];
+const SWIPE_THRESHOLD = 0.18;
+const SWIPE_FRAMES = 12;
+let lastGestureTime = 0;
+const GESTURE_COOLDOWN = 800;
+
+function toggleHandTracking() {
+  if (!handActive) startHandTracking();
+  else stopHandTracking();
 }
 
-function ending(){
- state='end';
- const overlay=document.getElementById('overlay');
+async function startHandTracking() {
+  const panel = document.getElementById('hand-panel');
+  const video = document.getElementById('hand-video');
+  const overlay = document.getElementById('hand-canvas-overlay');
+  const gestureEl = document.getElementById('gesture-name');
+  const btn = document.getElementById('ctrl-hand');
 
- speak('Khushi... I found you');
+  btn.classList.add('active');
+  btn.textContent = '🖐 HANDS: ON';
 
- overlay.innerHTML=`<div class="card glitch"><h1>I WAS WATCHING</h1></div>`;
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 } });
+    video.srcObject = stream;
 
- setTimeout(()=>{
-   overlay.innerHTML=`<div class="card glitch"><h1>YOU CAN'T ESCAPE</h1></div>`;
- },1500);
+    // Load MediaPipe dynamically
+    const handsScript = document.createElement('script');
+    handsScript.src = 'https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/hands.js';
+    handsScript.crossOrigin = 'anonymous';
 
- setTimeout(()=>{
-   overlay.innerHTML=`<div class="card"><h1>Khushi</h1></div>`;
- },3000);
+    handsScript.onload = () => {
+      const cameraScript = document.createElement('script');
+      cameraScript.src = 'https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1675465527/camera_utils.js';
+      cameraScript.crossOrigin = 'anonymous';
+      cameraScript.onload = () => {
+        const drawScript = document.createElement('script');
+        drawScript.src = 'https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3.1620248257/drawing_utils.js';
+        drawScript.crossOrigin = 'anonymous';
+        drawScript.onload = () => initMediaPipe(video, overlay, gestureEl);
+        document.head.appendChild(drawScript);
+      };
+      document.head.appendChild(cameraScript);
+    };
+    document.head.appendChild(handsScript);
 
- setTimeout(()=>{
-   overlay.innerHTML=`
-   <div class="card">
-     <p>You have successfully won the game.</p>
-     <p>Now it's time you and Tirthal win the world together.</p>
-     <p>Trust me, being a computer, I know he is one of the best men you will ever see.</p>
-     <p>He will respect a girl like never before.</p>
-     <button onclick="location.reload()">Restart</button>
-   </div>`;
- },5000);
+    handActive = true;
+    panel.classList.add('visible');
+    overlay.width = 320; overlay.height = 240;
+
+  } catch(err) {
+    btn.textContent = '🖐 HANDS: ERR';
+    btn.classList.remove('active');
+    showGestureFeedback('Camera denied');
+    setTimeout(()=>hideGestureFeedback(), 2000);
+  }
+}
+
+function initMediaPipe(video, overlay, gestureEl) {
+  if (typeof Hands === 'undefined') return;
+
+  mpHands = new Hands({
+    locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/${f}`
+  });
+  mpHands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.6, minTrackingConfidence: 0.5 });
+  mpHands.onResults(results => onHandResults(results, overlay, gestureEl));
+
+  mpCamera = new Camera(video, {
+    onFrame: async () => { await mpHands.send({ image: video }); },
+    width: 320, height: 240
+  });
+  mpCamera.start();
+}
+
+function onHandResults(results, overlay, gestureEl) {
+  const ctx = overlay.getContext('2d');
+  ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+  if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
+    handHistory.length = 0;
+    gestureEl.textContent = '—';
+    return;
+  }
+
+  const landmarks = results.multiHandLandmarks[0];
+
+  // Draw landmarks
+  if (typeof drawConnectors !== 'undefined') {
+    drawConnectors(ctx, landmarks, HAND_CONNECTIONS, { color: 'rgba(240,165,0,.6)', lineWidth: 1.5 });
+    drawLandmarks(ctx, landmarks, { color: 'rgba(255,201,60,.9)', lineWidth: 1, radius: 3 });
+  }
+
+  const wrist = landmarks[0];
+  handHistory.push({ x: wrist.x, y: wrist.y, t: Date.now() });
+  if (handHistory.length > 20) handHistory.shift();
+
+  // Detect gestures
+  const gesture = detectGesture(landmarks);
+  gestureEl.textContent = gesture;
+
+  // Detect swipe
+  if (handHistory.length >= SWIPE_FRAMES) {
+    const now = Date.now();
+    if (now - lastGestureTime > GESTURE_COOLDOWN) {
+      const recent = handHistory.slice(-SWIPE_FRAMES);
+      const dx = recent[recent.length-1].x - recent[0].x;
+      const dy = Math.abs(recent[recent.length-1].y - recent[0].y);
+      if (Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > dy * 2) {
+        lastGestureTime = now;
+        handHistory.length = 0;
+        if (dx < 0) {
+          // Swipe left = next
+          showGestureFeedback('→ NEXT');
+          advance();
+        } else {
+          // Swipe right = prev
+          showGestureFeedback('← PREV');
+          retreat();
+        }
+      }
+    }
+  }
+
+  // Open palm = anti-gravity toggle
+  if (gesture === 'OPEN PALM') {
+    const now = Date.now();
+    if (now - lastGestureTime > 1500) {
+      lastGestureTime = now;
+      toggleAntiGravity();
+      showGestureFeedback('🚀 ANTI-G!');
+    }
+  }
+}
+
+function detectGesture(lm) {
+  // Check if fingers are extended
+  const tips = [8, 12, 16, 20]; // index, middle, ring, pinky
+  const pips = [6, 10, 14, 18];
+  let extended = 0;
+  tips.forEach((t, i) => { if (lm[t].y < lm[pips[i]].y) extended++; });
+  const thumbExtended = lm[4].x < lm[3].x; // rough check
+
+  if (extended >= 4) return 'OPEN PALM';
+  if (extended === 0 && !thumbExtended) return 'FIST';
+  if (extended === 1 && tips[0] === 8) return 'POINT →';
+  if (thumbExtended && extended === 0) return 'THUMBS UP';
+  return 'HAND';
+}
+
+function showGestureFeedback(text) {
+  const el = document.getElementById('gesture-feedback');
+  el.textContent = text;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 800);
+}
+function hideGestureFeedback() { document.getElementById('gesture-feedback').classList.remove('show'); }
+
+function stopHandTracking() {
+  handActive = false;
+  if (mpCamera) { mpCamera.stop(); mpCamera = null; }
+  if (mpHands) { mpHands.close(); mpHands = null; }
+  const video = document.getElementById('hand-video');
+  if (video.srcObject) { video.srcObject.getTracks().forEach(t => t.stop()); video.srcObject = null; }
+  document.getElementById('hand-panel').classList.remove('visible');
+  document.getElementById('ctrl-hand').classList.remove('active');
+  document.getElementById('ctrl-hand').textContent = '🖐 HANDS';
+}
+
+/* ============================================================
+   LOADER
+============================================================ */
+window.addEventListener('load', () => {
+  // Init controls
+  updateControls();
+
+  // Letterbox
+  setTimeout(() => {
+    document.getElementById('lb-top').classList.add('gone');
+    document.getElementById('lb-bottom').classList.add('gone');
+  }, 400);
+
+  // Hide loader after 2.8s
+  setTimeout(() => {
+    const loader = document.getElementById('loader');
+    loader.style.transition = 'opacity .8s';
+    loader.style.opacity = '0';
+    setTimeout(() => { loader.style.display = 'none'; startScramble(); }, 800);
+  }, 2800);
+});
+
+function startScramble() {
+  document.getElementById('scramble-1').style.opacity = '1';
+  document.getElementById('scramble-2').style.opacity = '1';
+  scramble(document.getElementById('scramble-1'), 'TIRTHAL', 900, 0);
+  scramble(document.getElementById('scramble-2'), 'KOTHARI', 1100, 200);
 }
 </script>
 </body>
