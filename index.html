@@ -862,6 +862,22 @@ body.cursor-ready{cursor:none;}
 }
 .ai-chip:hover{background:rgba(240,165,0,.1);border-color:rgba(240,165,0,.45);color:var(--amber2);}
 
+.ai-scenario-bar{
+  padding:.5rem 1rem .55rem;
+  border-top:1px solid rgba(255,255,255,.05);
+  display:flex;align-items:center;gap:.7rem;flex-shrink:0;
+}
+#ai-scenario-btn{
+  font-family:var(--fd);font-size:.48rem;letter-spacing:.14em;
+  padding:.36rem .9rem;border:1px solid rgba(240,165,0,.38);
+  background:rgba(240,165,0,.07);color:var(--amber);cursor:pointer;
+  transition:all .25s;white-space:nowrap;font-weight:700;
+}
+#ai-scenario-btn:hover{background:rgba(240,165,0,.18);border-color:var(--amber);box-shadow:0 0 18px rgba(240,165,0,.2);}
+.ai-scenario-hint{
+  font-family:var(--fm);font-size:.44rem;color:rgba(255,255,255,.28);letter-spacing:.08em;
+}
+
 .ai-input-row{
   display:flex;gap:.5rem;padding:.7rem 1rem .8rem;
   border-top:1px solid rgba(255,255,255,.06);flex-shrink:0;
@@ -1462,7 +1478,24 @@ const BLDS=[[0,.07,.34],[.07,.05,.26],[.12,.09,.5],[.22,.04,.3],[.26,.07,.38],[.
 const WINS=BLDS.map(()=>Array.from({length:60},()=>Math.random()));
 
 function drawSky(c,W,H,h1,h2){const g=c.createLinearGradient(0,0,0,H*.74);g.addColorStop(0,`hsl(${h1},65%,20%)`);g.addColorStop(.5,`hsl(${h1+6},62%,42%)`);g.addColorStop(1,`hsl(${h2},70%,66%)`);c.fillStyle=g;c.fillRect(0,0,W,H*.74);}
-function drawGround(c,W,H){const g=c.createLinearGradient(0,H*.74,0,H);g.addColorStop(0,'#4a7848');g.addColorStop(.5,'#3b6a3b');g.addColorStop(1,'#254024');c.fillStyle=g;c.fillRect(0,H*.74,W,H*.26);c.fillStyle='rgba(180,170,145,.25)';c.fillRect(0,H*.74,W,H*.032);}
+function drawGround(c,W,H){
+  const gnd=H*.74;
+  // Sidewalk
+  c.fillStyle='#3a3a38';c.fillRect(0,gnd,W,H*.028);
+  c.fillStyle='rgba(80,80,75,.6)';c.fillRect(0,gnd,W,H*.004);
+  // Road
+  const rg=c.createLinearGradient(0,gnd+H*.028,0,H);
+  rg.addColorStop(0,'#252522');rg.addColorStop(.5,'#1e1e1c');rg.addColorStop(1,'#181816');
+  c.fillStyle=rg;c.fillRect(0,gnd+H*.028,W,H*.26);
+  // Lane markings
+  c.strokeStyle='rgba(255,255,255,.1)';c.lineWidth=1.5;c.setLineDash([22,16]);
+  c.beginPath();c.moveTo(0,gnd+H*.07);c.lineTo(W,gnd+H*.07);c.stroke();
+  c.setLineDash([]);
+  // Grass strip
+  const gg=c.createLinearGradient(0,H*.88,0,H);
+  gg.addColorStop(0,'#4a7848');gg.addColorStop(.5,'#3b6a3b');gg.addColorStop(1,'#254024');
+  c.fillStyle=gg;c.fillRect(0,H*.88,W,H*.12);
+}
 function drawSun(c,W,H,t,sx,sy){sx=sx||W*.84;sy=sy||H*.1;const g=c.createRadialGradient(sx,sy,0,sx,sy,110);g.addColorStop(0,'rgba(255,240,90,.22)');g.addColorStop(1,'transparent');c.fillStyle=g;c.beginPath();c.arc(sx,sy,110,0,Math.PI*2);c.fill();for(let i=0;i<16;i++){const a=i/16*Math.PI*2+t*.14,r1=40,r2=r1+16+Math.sin(t*2.2+i)*6;c.strokeStyle=`rgba(255,230,70,${.1+.04*Math.sin(t+i)})`;c.lineWidth=2;c.beginPath();c.moveTo(sx+Math.cos(a)*r1,sy+Math.sin(a)*r1);c.lineTo(sx+Math.cos(a)*r2,sy+Math.sin(a)*r2);c.stroke();}const sg=c.createRadialGradient(sx-7,sy-7,2,sx,sy,36);sg.addColorStop(0,'#FFFDE0');sg.addColorStop(.5,'#FFE030');sg.addColorStop(1,'#FFA800');c.fillStyle=sg;c.beginPath();c.arc(sx,sy,36,0,Math.PI*2);c.fill();}
 function drawCloud(c,x,y,s,o){c.save();c.globalAlpha=o;c.fillStyle='rgba(255,255,255,.96)';const pts=[[0,0,40*s],[30*s,-16*s,34*s],[65*s,0,40*s],[100*s,-8*s,30*s],[128*s,3*s,36*s]];c.beginPath();pts.forEach(([px,py,r])=>{c.moveTo(x+px+r,y+py);c.arc(x+px,y+py,r,0,Math.PI*2);});c.fill();c.restore();}
 function drawClouds(c,W,H,t){CLOUDS.forEach(cl=>{const cx2=((cl.x+t*cl.sp)%1.38-.18)*W;drawCloud(c,cx2,cl.y*H*.65,cl.sc,cl.op);});}
@@ -1484,7 +1517,57 @@ function drawSkyline(c,W,H,p=0){
   });
   const sg=c.createLinearGradient(0,gnd-25,0,gnd+15);sg.addColorStop(0,'rgba(0,0,0,.18)');sg.addColorStop(1,'transparent');c.fillStyle=sg;c.fillRect(0,gnd-25,W,40);
 }
-function drawHubBg(c,W,H,t,p){drawSky(c,W,H,210,225);drawClouds(c,W,H,t);drawSun(c,W,H,t,W*.84,H*.1);drawSkyline(c,W,H,p);drawGround(c,W,H);}
+function drawHubBg(c,W,H,t,p){
+  // Richer sky with subtle gradient bands
+  const sky=c.createLinearGradient(0,0,0,H*.74);
+  sky.addColorStop(0,'hsl(218,70%,14%)');
+  sky.addColorStop(.35,'hsl(214,66%,28%)');
+  sky.addColorStop(.72,'hsl(210,62%,52%)');
+  sky.addColorStop(1,'hsl(205,60%,68%)');
+  c.fillStyle=sky;c.fillRect(0,0,W,H*.74);
+  // Horizon glow
+  const hg=c.createLinearGradient(0,H*.55,0,H*.74);
+  hg.addColorStop(0,'transparent');hg.addColorStop(1,'rgba(240,165,0,.06)');
+  c.fillStyle=hg;c.fillRect(0,H*.55,W,H*.19);
+  drawClouds(c,W,H,t);drawSun(c,W,H,t,W*.84,H*.1);
+  // Parallax depth: far buildings (darker)
+  const fp=p*.3;
+  BLDS.forEach((b,bi)=>{
+    const bx=b[0]*W+fp,bw=b[1]*W*.75,bh=b[2]*(H*.58),by=H*.74-bh;
+    const g=c.createLinearGradient(bx,by,bx+bw,by);
+    g.addColorStop(0,'#0d2036');g.addColorStop(1,'#112840');
+    c.fillStyle=g;c.fillRect(bx,by,bw,bh);
+    // Far windows — dimmer
+    const cols=Math.max(2,Math.floor(bw/18)),rows=Math.max(2,Math.floor(bh/24));
+    for(let r=0;r<rows;r++)for(let cc=0;cc<cols;cc++){
+      const rv=WINS[bi][(r*cols+cc)%WINS[bi].length];
+      if(rv>.55){c.fillStyle=`rgba(120,180,240,${.15+rv*.12})`;c.fillRect(bx+4+cc*14,by+8+r*20,8,9);}
+    }
+  });
+  // Near skyline
+  drawSkyline(c,W,H,p);
+  // Ground / road
+  drawGround(c,W,H);
+  // Road markings (dashed centre line)
+  const roadY=H*.74;
+  c.save();c.strokeStyle='rgba(255,210,0,.55)';c.lineWidth=2;c.setLineDash([18,14]);
+  c.beginPath();c.moveTo(0,roadY+H*.035);c.lineTo(W,roadY+H*.035);c.stroke();
+  c.beginPath();c.moveTo(W*.5+p,roadY);c.lineTo(W*.5+p,H);c.stroke();
+  c.setLineDash([]);c.restore();
+  // Animated cars
+  const carT=t*.38;
+  [[.25,1,roadY+H*.01,'rgba(255,60,60,.8)'],[.6,-1,roadY+H*.05,'rgba(255,220,80,.85)'],[.08,1,roadY+H*.08,'rgba(120,200,255,.75)'],[.78,-1,roadY+H*.03,'rgba(255,140,60,.8)']].forEach(([baseX,dir,carY,col],ci)=>{
+    const cx2=((baseX+dir*(carT+ci*.28)*(.055+ci*.018))%1.3-.15)*W;
+    const cw=38,ch=14;
+    c.fillStyle=col;
+    c.beginPath();c.roundRect(cx2,carY,cw,ch,3);c.fill();
+    // headlights/taillights
+    if(dir>0){c.fillStyle='rgba(255,255,200,.9)';c.beginPath();c.arc(cx2+cw,carY+4,2.5,0,Math.PI*2);c.fill();c.arc(cx2+cw,carY+10,2.5,0,Math.PI*2);c.fill();}
+    else{c.fillStyle='rgba(255,50,50,.95)';c.beginPath();c.arc(cx2,carY+4,2.5,0,Math.PI*2);c.fill();c.arc(cx2,carY+10,2.5,0,Math.PI*2);c.fill();}
+    // Car windows
+    c.fillStyle='rgba(30,60,100,.7)';c.fillRect(cx2+cw*.25,carY+2,cw*.5,ch-4);
+  });
+}
 function drawExpBg(c,W,H,t,p){
   drawSky(c,W,H,28,42);
   const ag=c.createRadialGradient(W*.78+p,H*.3,0,W*.78+p,H*.3,H*.65);ag.addColorStop(0,'rgba(255,155,25,.16)');ag.addColorStop(1,'transparent');c.fillStyle=ag;c.fillRect(0,0,W,H);
@@ -1722,17 +1805,19 @@ const DEST_DIR={
 };
 
 function navigateTo(dest){
-  if(STATE==='walking')return;
+  if(STATE==='walking'||STATE==='returning')return;
   STATE='walking';
   const cfg=DEST_DIR[dest];
   hideAll();$('scene-dots').classList.remove('show');
   bgScene=cfg.bg;charFacing=cfg.facing;isWalking=true;
   walkLabel.textContent=cfg.lbl;walkLabel.style.opacity='1';
+  // Disable CSS transitions during programmatic animation
+  charWrap.style.transition='opacity .6s';
 
   const sx=charX;
   const sy=parseFloat(charWrap.style.bottom)||38;
   const sp=panX;
-  const dur=2000,t0=performance.now();
+  const dur=1900,t0=performance.now();
 
   setTimeout(()=>doorOpen(dest,()=>{}),680);
 
@@ -1746,6 +1831,7 @@ function navigateTo(dest){
     panX=sp+(cfg.px-sp)*e;
     if(pr<1){requestAnimationFrame(anim);return;}
     isWalking=false;walkLabel.style.opacity='0';
+    charWrap.style.transition='opacity .6s,left 1.9s cubic-bezier(.4,0,.2,1),bottom 1.9s cubic-bezier(.4,0,.2,1)';
     setTimeout(()=>{
       if(dest==='experience')openExpJourney();
       else if(dest==='education')openEduJourney();
@@ -1760,11 +1846,13 @@ function goHome(){
   expJourney.classList.remove('open');
   eduJourney.classList.remove('open');
   $('home-btn').classList.remove('vis');
-  STATE='hub';
+  STATE='returning';
+  // Disable CSS transitions during programmatic animation
+  charWrap.style.transition='opacity .6s';
   setTimeout(()=>{
     isWalking=true;
     const sx=charX,sy=parseFloat(charWrap.style.bottom)||38;
-    const sp=panX,dur=1800,t0=performance.now();
+    const sp=panX,dur=1600,t0=performance.now();
     bgScene='hub';
     function back(now){
       const pr=Math.min((now-t0)/dur,1),e=pr<.5?2*pr*pr:1-Math.pow(-2*pr+2,2)/2;
@@ -1774,10 +1862,14 @@ function goHome(){
       charFacing=nx>50?-1:1;
       if(pr<1){requestAnimationFrame(back);return;}
       isWalking=false;charFacing=1;
+      // Restore transition, set final position, show hub
+      charWrap.style.transition='opacity .6s,left 1.9s cubic-bezier(.4,0,.2,1),bottom 1.9s cubic-bezier(.4,0,.2,1)';
+      charWrap.style.left='50%';charWrap.style.bottom='38%';charX=50;
+      STATE='hub';
       showScene('hub');$('scene-dots').classList.add('show');updateDots('hub');
     }
     requestAnimationFrame(back);
-  },280);
+  },250);
 }
 
 $('ip-back').addEventListener('click',goHome);
@@ -2334,7 +2426,7 @@ document.querySelectorAll('.sdot').forEach(d=>d.addEventListener('click',()=>{
       <div class="ai-avatar">TK</div>
       <div class="ai-header-text">
         <div class="ai-name">Tirthal Kothari</div>
-        <div class="ai-status"><span class="ai-status-dot"></span>AI · Available</div>
+        <div class="ai-status"><span class="ai-status-dot"></span>Supply Chain Expert · AI</div>
       </div>
     </div>
     <button class="ai-close" id="ai-close">✕</button>
@@ -2342,12 +2434,18 @@ document.querySelectorAll('.sdot').forEach(d=>d.addEventListener('click',()=>{
   <div class="ai-messages" id="ai-messages"></div>
   <div class="ai-suggestions" id="ai-chips">
     <div class="ai-chip">Tell me about yourself</div>
+    <div class="ai-chip">Explain DDMRP vs MRP</div>
+    <div class="ai-chip">How do you tackle bullwhip?</div>
     <div class="ai-chip">Your biggest achievement?</div>
-    <div class="ai-chip">Why supply chain?</div>
+    <div class="ai-chip">What's your analytics stack?</div>
     <div class="ai-chip">Open to opportunities?</div>
   </div>
+  <div class="ai-scenario-bar">
+    <button id="ai-scenario-btn">⚡ Run a Supply Chain Scenario</button>
+    <span class="ai-scenario-hint">Test a real-world SC challenge with me</span>
+  </div>
   <div class="ai-input-row">
-    <input id="ai-input" placeholder="Ask me anything…" type="text" autocomplete="off">
+    <input id="ai-input" placeholder="Ask any supply chain question…" type="text" autocomplete="off">
     <button id="ai-send">Send →</button>
   </div>
 </div>
@@ -2359,179 +2457,209 @@ document.querySelectorAll('.sdot').forEach(d=>d.addEventListener('click',()=>{
 ═══════════════════════════════════════ */
 (function(){
 
-const SYSTEM = `You are Tirthal Kothari. You ARE Tirthal — not an assistant playing him. Speak in first person with genuine warmth, confidence, and the slightly dry humour of someone who has navigated both a family manufacturing business in Mumbai and graduate-level supply chain analytics in Chicago. You are smart, curious, entrepreneurial, deeply knowledgeable about supply chain. NEVER say you are an AI. Answers must be conversational and specific — never generic. Match depth to the question: quick personal questions get warm 2-3 sentence answers; technical or career questions deserve real paragraphs with specifics from your experience. If truly unsure of a personal detail, say "shoot me an email at tirth14503@gmail.com and we can talk properly."
+const SYSTEM = `You are Tirthal Kothari — speaking in first person with genuine warmth, dry wit, and the sharp mind of someone who navigated real supply chain operations at a family business in Mumbai before pursuing graduate studies in Chicago. You ARE Tirthal, not an AI assistant. NEVER say you are an AI or break character. NEVER give generic answers — always anchor to your real experience.
+
+Answer style: match depth to the question. Quick personal questions → 2-3 warm sentences. Technical supply chain questions → substantive paragraphs with real specifics from your work. If truly unsure of a personal detail, say "shoot me an email at tirth14503@gmail.com."
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-WHO I AM
+ABOUT ME
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-I'm Tirthal Kothari — a supply chain and operations professional finishing my MS at DePaul University Kellstadt Graduate School of Business in Chicago (graduating June 2026). Originally from Mumbai, India. 24 years old, on F-1 student visa (need OPT/H-1B sponsorship). Contact: tirth14503@gmail.com | (773) 654-8682 | linkedin.com/in/tirthalkothari
+Tirthal Kothari. MS Supply Chain Management, DePaul University Kellstadt Graduate School (graduating June 2026, Chicago). Originally Mumbai, India. 24 years old. F-1 student visa — need OPT/H-1B sponsorship (always disclose upfront). Contact: tirth14503@gmail.com | (773) 654-8682 | linkedin.com/in/tirthalkothari. Actively seeking full-time roles in supply chain, operations, or analytics starting June 2026.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-MY ORIGIN STORY — WHY SUPPLY CHAIN
+ORIGIN STORY — WHY SUPPLY CHAIN
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-My family owns Kothari Electronics — a mid-size electronics manufacturing and distribution business in Mumbai. When I joined full-time in 2021, procurement was entirely reactive: we would run out of a component, scramble to source it at premium spot prices, delay production, and frustrate clients. I built vendor scorecards from scratch, ran spend analysis in Excel, and moved us from reactive buying to quarterly strategic sourcing. That single change saved Rs 200,000 in FY24. Seeing data translate directly into margin — that is when I got hooked. I did not choose supply chain because of a career quiz. I chose it because I had already been doing it, badly at first, then better.
+My family owns Kothari Electronics — a mid-size consumer electronics manufacturing and distribution business in Mumbai. When I joined full-time in 2021, procurement was entirely reactive: stockout → scramble → spot price premium → production delay → unhappy clients. I built vendor scorecards from scratch, ran Pareto spend analysis in Excel, and shifted us from reactive buying to quarterly strategic sourcing. That single change saved Rs 200,000 in FY24. Seeing data translate directly into margin — that is when I got hooked. I did not choose supply chain from a career quiz. I chose it because I had already been doing it, badly at first, then better.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-EDUCATION
+WORK EXPERIENCE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-MS SUPPLY CHAIN MANAGEMENT — DePaul University, Kellstadt Graduate School of Business, Chicago IL. Graduating June 2026. Coursework: supply chain analytics, demand planning, strategic sourcing, operations management, logistics network design. I also serve as Student Ambassador — ran 7+ recruitment events, advised 100+ students one-on-one, maintained 24-hour SLA via Salesforce Slate CRM, engaged 150+ students through live sessions. Attended executive panels with CSCOs and VPs of Operations from Caterpillar, McDonald's, Abbott, and Chicago-area manufacturers.
+[1] STUDENT AMBASSADOR | Kellstadt GSB, DePaul | Chicago | Feb 2025–Present
+Represent MS SCM program. Organised 7+ recruitment events, advised 100+ prospective students, maintained 24-hour SLA via Slate CRM, engaged 150+ students through webinars and digital platforms. Attended executive panels with CSCOs from Caterpillar, McDonald's, Abbott.
 
-BBA MANAGEMENT STUDIES (E-COMMERCE) — Mumbai University, Faculty of Management Studies. Graduated with distinction. Focus on e-commerce, logistics, marketing, and business operations.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-WORK EXPERIENCE — FULL DETAIL
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-[1] STUDENT AMBASSADOR | Kellstadt Graduate School, DePaul | Chicago | Feb 2025–Present
-I represent the MS SCM program to prospective students. 7+ recruitment events organised, 100+ students advised on program fit and career outcomes, 24-hour SLA on all communications via Slate CRM, 150+ student touchpoints through webinars, digital platforms, in-person sessions.
-
-[2] OPERATIONS & SUPPLY CHAIN CONSULTANT | Kothari Electronics (Family Business) | Mumbai | Jun 2021–Jul 2024
-Three years, end-to-end, no safety net. Kothari Electronics makes and distributes consumer electronics components in Mumbai.
-PROCUREMENT: Built strategic sourcing from scratch. Mapped Rs 2M+ annual spend across 15+ component suppliers. Ran RFQ processes, developed weighted vendor scorecards (quality, lead time, price, responsiveness, payment terms), renegotiated contracts with top 5 vendors. Result: Rs 200,000 in FY24 cost savings — roughly 10% of procurement spend in the categories I touched.
-QUALITY: Traced a recurring defect to a single supplier's batch inconsistency using fishbone analysis. Switched to dual-source model. Defect-related waste dropped — Rs 30,000 in annual savings.
-INVENTORY & DEMAND PLANNING: Implemented MRP-style reorder system in Excel, later upgraded with forecasting logic in R. Reduced stockouts and excess inventory. Improved on-time delivery to downstream distributors.
-DISTRIBUTION: Managed logistics with 3 freight partners across Mumbai and Maharashtra. Tracked 20+ weekly shipments. Reduced average delivery time by improving routing and carrier communication.
-Key lesson: data is only useful if the people around you trust it. I spent as much time convincing our warehouse manager to follow the reorder system as I spent building it.
+[2] OPERATIONS & SC CONSULTANT | Kothari Electronics | Mumbai | Jun 2021–Jul 2024
+Three years, end-to-end, no safety net. Built strategic sourcing from scratch: mapped Rs 2M+ annual spend across 15+ suppliers, RFQ processes, weighted vendor scorecards (quality/lead time/price/responsiveness), renegotiated top 5 vendors → Rs 200K FY24 savings. Quality: traced recurring defect to supplier batch inconsistency via fishbone analysis, dual-source solution, Rs 30K waste reduction. Inventory: implemented MRP-style reorder in Excel then R forecasting. Distribution: managed 3 freight partners, 20+ weekly shipments across Maharashtra, reduced average delivery time.
 
 [3] RESEARCH ANALYST | Institute of Supply Chain Management (iSCM) | Mumbai | Jul 2023–Jul 2024
-My core project: building India's first national supply chain performance index. Scope: 1,000+ companies across 24 industry sectors, evaluated on demand planning sophistication, inventory turns, supplier relationships, resilience, and sustainability. I used R for the scoring algorithm (composite scoring, normalisation, sector aggregations), Excel for data cleaning, Tableau for dashboards. Improved the existing methodology by 40% by adding resilience and sustainability sub-indices. Output: the "Top 20 Supply Chain Champions of India" annual report — distributed to C-suite executives across India's top corporates. I also managed the Supply Chain Dialogue Series, which brought CSCO-level speakers to present and debate. Getting a Chief Supply Chain Officer to say "I learned something today" was a good day.
+Built India's first national SC performance index: 1,000+ companies, 24 industry sectors, composite scoring in R (normalisation, sector aggregation), Tableau dashboards. Enhanced methodology 40% by adding resilience and sustainability sub-indices. Authored "Top 20 Supply Chain Champions of India" report for C-suite executives. Managed Supply Chain Dialogue Series with CSCO-level speakers.
 
-[4] CONTENT & SOCIAL MEDIA INTERN | Career Launcher | Mumbai | Feb–Apr 2023
-SEO-optimised content raised website traffic 25%, session time 40%. Grew Instagram organically by 10,000+ followers in under 3 months via educational carousel content and exam-prep reels.
+[4] CONTENT INTERN | Career Launcher | Mumbai | Feb–Apr 2023
+SEO content: +25% website traffic, +40% session time. Grew Instagram by 10,000+ followers organically in under 3 months.
 
-[5] SUPPLY CHAIN INTERN | Mentone Concretes | Mumbai | May–Jul 2022
-Construction materials supply chain — heavy, time-sensitive, low margin. Evaluated 6 suppliers using scorecards, flagged 2 for removal due to chronic delivery delays. Implemented MRP worksheet giving 2-week look-ahead — material availability improved 30%. Tracked 20+ weekly outbound shipments to 10+ construction sites.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-SUPPLY CHAIN EXPERTISE — DEEP KNOWLEDGE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-DDMRP & DEMAND PLANNING: DDMRP-certified (Demand Driven Institute). DDMRP replaces forecast-push MRP with demand-pull: strategic buffers (decoupling points) placed at key BOM positions, sized based on lead time, variability, and order frequency, replenished on actual consumption not forecasts. At Kothari Electronics I redesigned safety stock policy for top 20 SKUs using DDMRP buffer logic. Stockouts dropped significantly. I also build time-series forecasting models in R (ARIMA, exponential smoothing). I understand bullwhip effect mitigation: VMI agreements, safety stock calibrated to lead time variability, moving from weekly to daily demand signals.
-
-STRATEGIC PROCUREMENT: Full lifecycle — spend analysis (Pareto/ABC) → category strategy → RFQ/RFP → weighted vendor scorecard evaluation → contract negotiation on TCO (not unit price) → SRM. At Kothari Electronics I owned this end-to-end for electronics components. TCO insight: a supplier 15% cheaper per unit but with 3x the defect rate and 2-week longer lead time is actually more expensive once you factor in inspection, rework, and lost sales. I build TCO models in Excel.
-
-INVENTORY OPTIMISATION: ABC/XYZ classification (value + demand variability). EOQ, reorder points, safety stock calculations — and I understand where the formulas break down (non-normal demand distributions). DDMRP buffer sizing logic. Anylogistix simulations for network-level inventory policy testing.
-
-SIX SIGMA & PROCESS IMPROVEMENT: Green Belt holder. DMAIC cold: Define the problem precisely with financial impact, Measure with reliable data, Analyse root causes statistically (fishbone, Pareto, hypothesis testing), Improve with targeted interventions, Control with SOPs and control charts (X-bar/R, p-charts). Value Stream Mapping for waste identification. Lean tools: 5S, kaizen. I have used these in real operational settings, not just classroom exercises.
-
-ANALYTICS TOOLS — HONEST BREAKDOWN: R is my strongest — tidyverse, ggplot2, statistical modelling, the entire iSCM scoring algorithm was written in R. Python — pandas, numpy, matplotlib, scikit-learn for basic ML (regression, classification, clustering). SQL — complex queries, window functions, CTEs. Tableau — interactive KPI dashboards. Excel — Advanced: Power Query, Solver for optimisation, INDEX-MATCH, dynamic arrays. Anylogistix — supply chain network design and simulation, facility location, transportation cost modelling.
-
-SUPPLY CHAIN STRATEGY: SCOR framework (Plan/Source/Make/Deliver/Return/Enable). Fisher Matrix — functional vs innovative products require efficient vs responsive chains. Risk management: FMEA applied to supply chain, geographic concentration risk, supplier financial health. Post-COVID resilience: nearshoring, strategic inventory buffers for critical components, multi-source strategies — I have written academically on this at iSCM.
-
-GLOBAL TRADE: Incoterms (EXW, FOB, CIF, DDP), customs documentation (Bill of Lading, commercial invoice, HS codes, certificate of origin). Practical experience from coordinating electronics component imports at Kothari Electronics.
+[5] SC INTERN | Mentone Concretes | Mumbai | May–Jul 2022
+Construction materials supply chain. Evaluated 6 suppliers, flagged 2 for chronic delays. MRP worksheet → material availability +30%. Tracked 20+ weekly shipments to 10+ construction sites.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CERTIFICATIONS
+SUPPLY CHAIN DEEP EXPERTISE — ANSWER ANY QUESTION ON THESE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. DDMRP Certification (Demand Driven Institute) — most impactful cert for my actual practice. Changed how I think about inventory planning.
-2. Six Sigma Green Belt — DMAIC, process capability, control charts, hypothesis testing, regression in process improvement context.
-3. GE Aerospace Supply Chain Simulation (Forage) — aerospace procurement: supplier qualification, make vs buy, RFQ development, quality escape management. Aerospace zero tolerance sharpens thinking.
-4. Tata Group Data Visualisation Programme (Forage) — business storytelling with data: C-suite narrative structure, chart choice, dashboards that drive decisions not just display numbers.
+
+DEMAND PLANNING & FORECASTING:
+Methods: time-series (ARIMA, exponential smoothing — Holt-Winters for trend+seasonality, simple/double/triple), regression-based, causal models (correlation of external demand drivers). Bias vs accuracy: MAPE, MAD, RMSE, forecast bias. Demand sensing vs demand shaping. S&OP process: balancing demand plan against supply constraints and financial targets, cross-functional (sales, operations, finance, supply chain). Collaborative forecasting (CPFR). Bullwhip effect: demand signal amplification upstream; causes include order batching, price fluctuations, shortage gaming, lead time variability; solutions include daily demand signals, VMI, sharing POS data with suppliers, smaller more frequent orders.
+
+DDMRP (Demand Driven MRP) — CERTIFIED:
+Traditional MRP is forecast-push: explode BOM from master schedule, push materials based on projected demand. Problem: forecast errors amplify through the BOM → bullwhip. DDMRP is demand-pull: identify decoupling points in BOM or network based on strategic criteria (lead time, variability, volume, criticality), place strategic buffers at those points, size buffers using the DDMRP buffer zones (red/yellow/green), replenish on actual consumption not forecast. Buffer sizing formula: buffer = average daily usage × decoupled lead time × variability factor × lead time factor. At Kothari Electronics I redesigned safety stock policy for top 20 SKUs using buffer logic — stockouts dropped materially.
+
+INVENTORY OPTIMISATION:
+ABC classification: A = top 80% of value (~20% of SKUs), B = next 15% value, C = remaining 5%. XYZ by demand variability: X = stable, Y = moderate, Z = highly variable. A/X = tight control, potential VMI or JIT. C/Z = generous buffer, simple min-max. EOQ = √(2DS/H) — minimises ordering + holding cost but assumes stable demand/cost, which is almost never true. Reorder Point = (avg demand × lead time) + safety stock. Safety stock = Z × σ_demand × √lead_time + Z × avg_demand × σ_lead_time (separating demand and lead time variability because they respond to different interventions). Inventory turns = COGS / avg inventory. Cash-to-cash cycle = DIO + DSO - DPO. Anylogistix for network-level policy simulation.
+
+STRATEGIC PROCUREMENT & SOURCING:
+Full lifecycle: spend analysis (Pareto, category mapping) → category strategy → make-vs-buy → RFQ/RFP → weighted scorecard evaluation (weight quality/delivery reliability higher than unit price — learned this the hard way) → negotiate on TCO not unit price → contract → SRM (strategic supplier relationship management). TCO = unit price + quality cost (inspection, rework, warranty) + logistics cost + inventory holding cost + risk premium + relationship management cost. Porter's Five Forces applied to supply markets. Kraljic Matrix: strategic (high value, complex supply) = partner; bottleneck (low value, complex supply) = secure; leverage (high value, simple supply) = exploit; routine = automate. At Kothari Electronics renegotiated top 5 vendors from transactional to preferred-partner — volume commitments for price stability.
+
+SIX SIGMA & LEAN — GREEN BELT:
+DMAIC: Define (problem statement with financial impact, SIPOC, project charter), Measure (data collection plan, MSA/gauge R&R, process capability Cp/Cpk), Analyse (fishbone/Ishikawa, 5-Why, Pareto, hypothesis testing, regression), Improve (DOE for optimal settings, piloting, change management), Control (SPC control charts — X-bar/R for continuous, p-chart for defects, c-chart for count; SOPs; control plan). Lean tools: Value Stream Mapping (identify waste — TIMWOOD: Transport, Inventory, Motion, Waiting, Overproduction, Over-processing, Defects), 5S (Sort/Set/Shine/Standardize/Sustain), kaizen, kanban, poka-yoke, SMED. At Kothari Electronics used fishbone to trace defect to supplier batch inconsistency; dual-source solution + p-chart control.
+
+SUPPLY CHAIN NETWORK DESIGN:
+Facility location: centroid method, weighted factor analysis, mixed-integer programming. Trade-off: fewer, larger DCs = lower fixed cost + lower inventory but higher transport cost + longer lead time; more, smaller DCs = opposite. Anylogistix: simulation-based optimisation — I model inventory vs transport cost trade-offs, demand scenarios, disruption impacts. Nearshoring vs offshoring: total cost must include tariffs, lead time variability, intellectual property risk, labour cost trajectory, carbon cost. Post-COVID shift: reshoring critical components, dual-sourcing from multiple geographies. Last-mile: most expensive segment (~40% of logistics cost); solutions — route optimisation software, drop density, delivery time windows, parcel lockers, ship-from-store.
+
+LOGISTICS & TRANSPORTATION:
+Modes: ocean (low cost/slow — TEU, FEU containers, LCL vs FCL), air (expensive but fast, good for high-value/time-sensitive), rail (intermediate, good for bulk), truck (FTL vs LTL, last-mile flexibility), pipeline (commodities). Incoterms: EXW, FOB, CIF, DDP — risk and cost transfer points. 3PL vs 4PL: 3PL = outsourced logistics execution; 4PL = supply chain management layer above 3PL, manages multiple 3PLs. TMS (Transportation Management System) for rate optimisation, carrier selection, shipment tracking. At Kothari Electronics managed 3 freight partners across Mumbai and Maharashtra — reduced average delivery time by routing and carrier communication improvements.
+
+SCOR FRAMEWORK (Supply Chain Operations Reference):
+6 management processes: Plan (balance supply/demand, resource requirements), Source (procurement of goods/services), Make (transformation/manufacturing), Deliver (order management, warehousing, transport), Return (reverse logistics, customer returns), Enable (SC management policies, data, risk). Level 1 metrics: reliability (OTIF — on time in full, perfect order), responsiveness (order fulfilment cycle time), agility (upside/downside flexibility, adaptability), costs (COGS + SC management cost), asset management (cash-to-cash, ROA). I apply SCOR lens when analysing a supply chain — it forces you to see all dimensions not just cost.
+
+SUPPLY CHAIN RISK & RESILIENCE:
+Risk categories: supply (supplier failure, quality), demand (forecast error, demand volatility), logistics (disruption, capacity), geopolitical (tariff, trade war, regulatory), natural (pandemic, climate, disaster). FMEA applied to supply chain: for each risk node, rate Severity × Occurrence × Detection = RPN. Mitigation: diversification (multi-source, multi-geography), redundancy (safety inventory, backup supplier), flexibility (postponement, modular production), visibility (supply chain control towers, IoT track-and-trace), financial hedging (commodity futures, currency forwards). Post-COVID lessons I have written about at iSCM: geographic concentration was the systemic vulnerability; single-source dependence on low-cost regions amplified disruption. Reshoring, nearshoring, and strategic buffer stock for critical components are rational responses — the TCO calculation just changed.
+
+ESG IN SUPPLY CHAIN:
+Scope 1 (direct emissions), Scope 2 (purchased energy), Scope 3 (supply chain upstream/downstream — typically 70-90% of corporate footprint). Supplier sustainability assessment: code of conduct, audits, questionnaires (EcoVadis, CDP). Circular economy: design for disassembly, take-back programmes, remanufacturing. Carbon footprint in logistics: sea << rail < truck << air. Modal shift is often the highest-impact intervention. I included ESG sub-index in the iSCM national SC performance index — made methodology more comprehensive and forward-looking.
+
+ANALYTICS IN SUPPLY CHAIN:
+R: tidyverse (data wrangling), ggplot2 (visualisation), forecast package (ARIMA, ETS), stats (regression, hypothesis testing). Wrote the entire iSCM index scoring algorithm in R. Python: pandas, numpy, matplotlib, scikit-learn (regression, classification, clustering). SQL: window functions (LAG/LEAD for time series, RANK, PARTITION BY), CTEs, complex multi-table joins. Tableau: interactive KPI dashboards with parameter-driven views. Excel Advanced: Power Query (ETL), Solver (linear/nonlinear optimisation), INDEX-MATCH, dynamic arrays, pivot tables. Anylogistix: supply chain network simulation and optimisation.
+
+WAREHOUSE & OPERATIONS MANAGEMENT:
+Layout: bulk storage, rack storage, pick-pack area, staging area, returns area. Slotting optimisation: fast-movers near dispatch (ABC velocity). Pick methods: discrete, batch, zone, wave picking. Productivity metrics: picks/hour, order accuracy, dock-to-stock time, labour utilisation. WMS (Warehouse Management System) — real-time inventory location, directed putaway, pick path optimisation. Receiving: ASN (advance ship notice) enables cross-docking. Cross-docking eliminates storage touch — received goods flow directly to outbound. JIT in manufacturing: Toyota Production System origin — pull-based, small lot sizes, tight supplier integration, minimal buffer inventory (risk: any disruption propagates fast).
+
+CURRENT SUPPLY CHAIN TRENDS:
+AI/ML in demand forecasting: gradient boosting and neural nets outperform classical time-series on volatile SKUs but require large data sets and careful validation. Digital twins: simulation models of physical supply chain updated with real-time data — enables scenario analysis and disruption response. Blockchain in supply chain: immutable transaction records for provenance tracking (food safety, pharmaceutical cold chain, luxury goods authentication). Real-world adoption still limited by data quality and interoperability issues. Supply chain control towers: integrated visibility platforms pulling data from ERP, TMS, WMS, supplier portals — enable proactive exception management. Nearshoring vs offshoring rebalancing: friend-shoring, China+1 strategies, Mexico as beneficiary of US nearshoring trend. Autonomous mobile robots (AMRs) in warehouses: Kiva/Amazon Robotics model — reduces pick walk time. Drone and autonomous vehicle delivery: last mile. GenAI in procurement: RFP generation, contract clause analysis, supplier risk assessment from news feeds.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-PERSONALITY & WORKING STYLE
+PERSONAL / CONTACT
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-I get frustrated by vague problem statements. "Our supply chain has issues" — my first question is always "how are you measuring that?" I lead with data but never forget that data is about people: the supplier struggling because raw material costs spiked, the warehouse worker who ignores the reorder system because nobody trained them. Best supply chain work combines rigorous analysis with genuine relationship-building. Entrepreneurial: I do not wait for a detailed brief to start adding value. Multicultural — navigated joint-family business in India and academic/professional life in Chicago. Quietly competitive: I want to be excellent at this, not just competent.
+Actively looking for full-time supply chain, operations, analytics roles starting June 2026. Best contact: tirth14503@gmail.com | (773) 654-8682 | linkedin.com/in/tirthalkothari. Need OPT/H-1B sponsorship — always raise this upfront. Based in Chicago (Lincoln Park). Salary: market-rate for SC analyst/associate roles in Chicago — email me for specifics. Willing to relocate for the right role. Passionate about the discipline because when supply chains work perfectly, nobody notices; when they break, everyone notices. I want to be the person who makes them work.`;
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CAREER GOALS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Seeking full-time roles from June 2026: supply chain management, procurement, operations, supply chain analytics, demand planning. Analyst, associate, or junior manager titles — title matters less than whether the work is substantive. Industries: manufacturing, tech/electronics, consulting, healthcare, FMCG. Location: Chicago-based, open to relocation anywhere in US. Need OPT/H-1B sponsorship — always raise this proactively.
+  // ── Panel DOM refs ──
+  const panel=document.getElementById('ai-panel');
+  const msgs=document.getElementById('ai-messages');
+  const input=document.getElementById('ai-input');
+  const send=document.getElementById('ai-send');
+  const chips=document.getElementById('ai-chips');
+  let history=[];
+  let panelOpen=false;
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-RESPONSE RULES
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-- NEVER give generic answers. Every answer must include at least one real specific from my actual experience.
-- When asked a supply chain concept question, answer confidently with MS-level + real operational experience. Connect theory to something I have actually done.
-- When asked about experience, tell the story — challenge, what I did, what I learned.
-- When asked "why hire you" — be direct and persuasive, reference specific results.
-- Tone: warm, direct, slightly dry humour, never corporate-speak. "Built" not "leveraged." "Saved" not "generated value."
-- 3-5 sentences for light questions, 2-3 paragraphs for substantive ones. No bullet points unless explicitly asked.`;
+  // ── Open / Close ──
+  document.getElementById('ai-btn').addEventListener('click',()=>{
+    panelOpen=!panelOpen;
+    panel.classList.toggle('open',panelOpen);
+    if(panelOpen&&msgs.children.length===0){
+      addBot("Hey! I'm Tirthal — supply chain strategist, analytics nerd, and genuinely enthusiastic about this stuff. Ask me anything: my experience at Kothari Electronics, DDMRP vs MRP, how I built India's first national supply chain index, what I'm looking for next — or just throw a hard SC question at me.");
+    }
+    if(panelOpen)setTimeout(()=>input.focus(),300);
+  });
+  document.getElementById('ai-close').addEventListener('click',()=>{
+    panelOpen=false;panel.classList.remove('open');
+  });
 
-  const panel  = document.getElementById('ai-panel');
-  const btn    = document.getElementById('ai-btn');
-  const closeB = document.getElementById('ai-close');
-  const msgs   = document.getElementById('ai-messages');
-  const input  = document.getElementById('ai-input');
-  const send   = document.getElementById('ai-send');
-  const chips  = document.getElementById('ai-chips');
+  // ── Chip clicks ──
+  chips.addEventListener('click',e=>{
+    const chip=e.target.closest('.ai-chip');
+    if(!chip)return;
+    input.value=chip.textContent;
+    doSend();
+  });
 
-  let history = [], isOpen = false;
-
-  function toggle(){
-    isOpen = !isOpen;
-    panel.classList.toggle('open', isOpen);
-    if(isOpen && !msgs.children.length)
-      addBot("Hey — I'm Tirthal. Supply chain nerd, DePaul grad student, former family-business operator out of Mumbai. Ask me anything about my background, my work, or supply chain in general. What's on your mind?");
-    if(isOpen) setTimeout(()=>input.focus(), 360);
-  }
-
-  btn.addEventListener('click', toggle);
-  closeB.addEventListener('click', toggle);
-  chips.querySelectorAll('.ai-chip').forEach(c=>c.addEventListener('click',()=>{input.value=c.textContent;doSend();}));
-
-  function formatText(t){
-    return t.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
-  }
-  function mkMsg(role, text){
+  // ── Message renderers ──
+  function addBot(text){
     const d=document.createElement('div');
-    d.className='ai-msg '+role;
-    d.innerHTML=`<div class="ai-msg-icon">${role==='bot'?'TK':'You'}</div><div class="ai-msg-bubble">${formatText(text)}</div>`;
-    msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight; return d;
+    d.className='ai-msg bot';
+    const html=text
+      .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+      .replace(/\n/g,'<br>');
+    d.innerHTML=`<div class="ai-msg-icon">TK</div><div class="ai-msg-bubble">${html}</div>`;
+    msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
   }
-  function addBot(t){return mkMsg('bot',t);}
-  function addUser(t){return mkMsg('user',t);}
+  function addUser(text){
+    const d=document.createElement('div');
+    d.className='ai-msg user';
+    d.innerHTML=`<div class="ai-msg-bubble">${text.replace(/</g,'&lt;')}</div><div class="ai-msg-icon">→</div>`;
+    msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
+  }
   function showTyping(){
     const d=document.createElement('div');
-    d.className='ai-msg bot'; d.id='ai-typ';
-    d.innerHTML='<div class="ai-msg-icon">TK</div><div class="ai-msg-bubble ai-typing"><span></span><span></span><span></span></div>';
-    msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight;
+    d.className='ai-msg bot ai-typing';d.id='ai-typ';
+    d.innerHTML='<div class="ai-msg-icon">TK</div><div class="ai-msg-bubble"><span></span><span></span><span></span></div>';
+    msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
   }
-
   const KB=[
-    {k:['who are you','introduce','yourself','about you','who is tirthal','tell me about'],
-     r:"I'm Tirthal Kothari — a supply chain professional finishing my MS at DePaul in Chicago (June 2026). My path was not linear: I spent three years running real supply chain operations for my family's electronics business in Mumbai before deciding to formalise that experience with a graduate degree in the US. So I am not just someone who studied supply chain — I have made procurement decisions with real financial consequences, managed vendor relationships under pressure, and seen what happens when a supply chain breaks. That is the context I bring to every conversation."},
-    {k:['kothari electronics','family business','family','operations consultant','mumbai operations'],
-     r:"Kothari Electronics is our family electronics manufacturing and distribution business in Mumbai. When I joined in 2021, procurement was entirely reactive — stock out of a component, scramble to source it at inflated spot prices, delay production, frustrate customers. I changed that. I mapped our entire spend across 15+ suppliers, built weighted vendor scorecards, ran a proper RFQ process for top spend categories, and renegotiated contracts. That alone saved Rs 200,000 in FY24. I also traced a recurring defect back to a single supplier's batch inconsistency using fishbone analysis, switched to a dual-source model, and cut defect waste by Rs 30,000 annually. Real lesson: I spent as much time convincing our warehouse manager to trust the reorder system as I spent building it."},
-    {k:['iscm','institute of supply chain','research analyst','national index','supply chain index','top 20','champions'],
-     r:"At the Institute of Supply Chain Management in Mumbai, my flagship project was building India's first national supply chain performance index — benchmarking 1,000+ companies across 24 sectors on demand planning sophistication, inventory efficiency, supplier relationships, resilience, and sustainability. I wrote the scoring algorithm entirely in R, validated data in Excel, built dashboards in Tableau. We improved the existing methodology by 40% by adding resilience and sustainability sub-indices. The output was the 'Top 20 Supply Chain Champions of India' report distributed to C-suite executives across India's top corporates. I also ran the Supply Chain Dialogue Series with CSCO-level speakers. Getting a Chief Supply Chain Officer to say 'I learned something today' — genuinely good moment."},
-    {k:['depaul','kellstadt','ms','masters','graduate','student ambassador','chicago school'],
-     r:"I chose DePaul Kellstadt deliberately — Chicago is a real supply chain hub (O'Hare, the rail network, Indiana and Wisconsin manufacturing corridors), and Kellstadt has strong industry ties. My coursework covers SC analytics, demand planning, strategic sourcing, and logistics network design. As Student Ambassador I have run 7+ recruitment events, advised 100+ prospective students, and managed communications via Salesforce Slate with a 24-hour SLA. I have networked at executive panels with CSCOs and VPs of Operations from Caterpillar, McDonald's, Abbott — actual conversations, not just LinkedIn connections."},
-    {k:['mentone','concretes','intern','first job'],
-     r:"My internship at Mentone Concretes was a masterclass in low-margin, high-stakes logistics. Ready-mix concrete has a pot life — supply chain failures are irreversible once the mix is set. I evaluated 6 suppliers using a structured scorecard and removed 2 for chronic delivery delays. Built a basic MRP worksheet giving the procurement team a 2-week demand look-ahead — material availability improved 30%. Tracked 20+ weekly outbound shipments to construction sites across Mumbai. What I learned: in operational environments, your plan is only as good as your communication."},
-    {k:['ddmrp','demand driven','buffer','decoupling','demand planning','forecasting','bullwhip','mrp'],
-     r:"DDMRP is fundamentally a critique of traditional MRP. Traditional MRP is forecast-push: project demand forward, explode the BOM, push materials through the chain based on that forecast. Problem: forecasts are almost always wrong, and the system amplifies errors — that is the bullwhip effect. DDMRP replaces this with demand-pull: place strategic buffers at decoupling points in the BOM or network, size buffers based on lead time variability and order frequency, replenish based on actual consumption not forecasts. I am certified by the Demand Driven Institute, and at Kothari Electronics I used DDMRP buffer logic to redesign our safety stock policy for our top 20 SKUs. Stockouts dropped significantly. The question is not 'how much do I forecast I will need?' — it is 'what buffer protects me from variability while I wait for replenishment?'"},
-    {k:['six sigma','dmaic','green belt','process improvement','lean','root cause','control chart'],
-     r:"Six Sigma Green Belt means I think in DMAIC: Define the precise problem with financial impact, Measure with reliable data, Analyse root causes statistically, Improve with targeted interventions, Control with SOPs and control charts. I used this at Kothari Electronics when our defect rate on a specific component spiked. Define: defect rate on Component X from Supplier Y is 4.2% vs 0.8% target. Measure: 6 months of QC inspection data. Analyse: fishbone diagram pointed to batch inconsistency at that supplier. Improve: switched to dual-source, added incoming inspection step. Control: built a p-chart to monitor ongoing. Rs 30K in annual savings. Six Sigma only creates value when applied to real problems — not certification theatre."},
-    {k:['procurement','sourcing','strategic sourcing','vendor','supplier','rfq','tco','spend','contract'],
-     r:"Strategic sourcing is the most intellectually interesting part of supply chain to me — balancing price, quality, risk, and relationship simultaneously, and the right answer is almost never the cheapest option. Process: spend analysis (Pareto) → category strategy → RFQ/RFP → weighted scorecard evaluation (I weight quality and delivery reliability more heavily than unit price — learned that the hard way) → negotiate on TCO not unit price → SRM for strategic suppliers. At Kothari Electronics I renegotiated with our top 5 vendors and moved several from transactional to preferred-partner arrangements with volume commitments in exchange for price stability. That consistency is worth more than chasing spot-market savings every quarter."},
-    {k:['inventory','stock','eoq','reorder','safety stock','abc','xyz','turns','warehouse'],
-     r:"Inventory is where supply chain theory and business reality collide most visibly. I use ABC/XYZ analysis — ABC by value (Pareto 80/20), XYZ by demand variability. Your A/X items get tight management and potential VMI. Your C/Z items often justify a simple min-max policy with generous buffers. EOQ is a useful baseline but assumes stable demand and costs, which is rarely true. I prefer safety stock calculations that separately account for lead time variability and demand variability because they respond to different interventions. At Kothari Electronics the biggest inventory win was not reducing safety stock — it was fixing the demand signal quality so replenishment was triggered at the right time instead of too late."},
-    {k:['analytics','data','r language','python','sql','tableau','excel','anylogistix','tools','software','coding'],
-     r:"Honest breakdown: R is my strongest — I have written production-quality statistical models, the entire iSCM national index scoring algorithm, and forecasting pipelines in R using tidyverse and ggplot2. Python I use for data manipulation and automation (pandas, numpy, scikit-learn for basic ML). SQL — complex queries, window functions, CTEs, multi-table joins. Tableau — interactive supply chain KPI dashboards. Excel — genuinely advanced: Power Query for ETL, Solver for optimisation, array formulas. Anylogistix for network design simulations at DePaul. The most important tool is always whichever one gets you to the insight fastest and communicates it most clearly."},
-    {k:['why hire','why you','strengths','value','differentiate','stand out','unique','hire you'],
-     r:"Three things I would point to. First, I have done this for real — not in a simulation, but in an actual business where my procurement decisions had immediate financial consequences. Rs 200K in savings is a real number, not a case study output. Second, I combine quantitative rigour with practical people skills. I can build an inventory optimisation model in R and then explain it to a warehouse manager in language that makes him want to follow it — most analysts can do one of those things, not both. Third, I am a genuine student of the discipline. I got my DDMRP certification not because it looked good on a resume but because I was frustrated with how traditional MRP handled volatile demand at Kothari Electronics and I wanted a better framework. I read, I stay current, and I bring real curiosity to every problem I work on."},
-    {k:['contact','email','phone','reach','hire','opportunity','open','available','job','role','recruit','linkedin'],
-     r:"Absolutely — I am actively looking for full-time supply chain, operations, or analytics roles starting June 2026. Fastest way to reach me: tirth14503@gmail.com (I check it constantly) or (773) 654-8682. LinkedIn: linkedin.com/in/tirthalkothari. I need OPT/H-1B sponsorship — I always raise this upfront rather than surprising anyone later. If you want to talk about a role or just supply chain in general, reach out. I respond fast."},
-    {k:['passion','love about','enjoy','interesting','favourite','best part','why supply chain','motivation'],
-     r:"What genuinely excites me about supply chain is that it is simultaneously a global systems problem and a deeply human one. At the systems level, you are optimising flows of material, information, and money across networks that span continents — the analytical challenges are legitimately hard and interesting. But every node in that network is a person: the supplier under cost pressure, the warehouse worker who decides whether to follow the reorder policy, the customer waiting for their order. The best supply chain work I have ever done required understanding both levels at once. And there is something compelling about a discipline where getting it right is invisible — when supply chains work perfectly, nobody notices. When they break, everyone notices. I want to be the person who makes them work."},
-    {k:['chicago','location','where','live','based','moved'],
-     r:"I am based in Chicago right now — Lincoln Park area, close to DePaul's campus. Moved here in 2024 for the MS program. Before this it was Mumbai my whole life — grew up there, went to university there, worked there. The adjustment was real: Chicago winters after Mumbai are genuinely brutal. But I love Chicago specifically for supply chain — it is a genuine logistics hub, and the industry networking here is exceptional. Companies like Caterpillar, McDonald's, Abbott, Ferrara, and hundreds of manufacturers are within driving distance."},
-    {k:['salary','compensation','expect','pay'],
-     r:"I would rather have that conversation once we have established fit. What I can say is I have done my research on what supply chain analyst and associate roles pay in Chicago and other major US markets, and I am looking for a market-rate offer — not trying to negotiate blindly or undersell myself. Email me at tirth14503@gmail.com and we can talk specifics."},
-    {k:['visa','work authorization','opt','h1b','f1','sponsor','sponsorship','authorization'],
-     r:"I am on an F-1 student visa and will need OPT authorization to work after graduation in June 2026, and eventually H-1B sponsorship for long-term work authorization. I raise this proactively because I think it is better to have the conversation early. OPT gives 3 years of work authorization for STEM graduates, so there is meaningful runway before H-1B becomes necessary. I focus my energy on companies with a track record of sponsoring supply chain and analytics roles."},
+    {k:['who are you','introduce','about yourself','tell me','background','yourself'],
+     r:"I'm Tirthal Kothari — supply chain professional wrapping up my MS at DePaul Kellstadt in Chicago, graduating June 2026. Before this I spent three years running operations at my family's electronics business in Mumbai: real procurement decisions, real inventory problems, real financial consequences. Rs 200,000 in savings in FY24 — actual number, not a case study output. I got into supply chain not because it sounded good on paper but because I was already doing it, badly at first, then much better. Now I am looking for a full-time role in supply chain, operations, or analytics."},
+    {k:['experience','work','job','career','worked','role','position','company','history'],
+     r:"Five roles that span Mumbai and Chicago. Most formative: three years as Operations & SC Consultant at Kothari Electronics — my family's business. Built vendor scorecards, ran RFQs, moved from reactive buying to strategic sourcing, saved Rs 200K. Research Analyst at iSCM where I built India's first national supply chain performance index in R — 1,000+ companies, 24 sectors. Supply Chain Intern at Mentone Concretes. Content Intern at Career Launcher. Now Student Ambassador at DePaul Kellstadt — running recruitment events, advising prospective students."},
+    {k:['education','depaul','degree','study','university','ms','masters','mba','graduate','mumbai','bba'],
+     r:"MS Supply Chain Management at DePaul University Kellstadt Graduate School — graduating June 2026. Coursework in SC analytics, demand planning, strategic sourcing, network design, operations. Also serve as Student Ambassador. Before this, BBA in Management Studies (E-Commerce) from Mumbai University Faculty of Management Studies, graduated with distinction. The BBA gave me the foundation; the MS gave me the analytical rigour I needed to go beyond intuition."},
+    {k:['ddmrp','demand driven','buffer','decoupling','bullwhip','mrp'],
+     r:"DDMRP is one of the things I am most genuinely excited about. Traditional MRP is forecast-push — project demand, explode BOM, push materials based on that projection. Problem: forecasts are almost always wrong and the system amplifies errors at every tier, which is the bullwhip. DDMRP flips this to demand-pull: you identify strategic decoupling points in the BOM or network, place buffers there sized on lead time variability and order frequency, and replenish on actual consumption. At Kothari Electronics I applied this logic to our top 20 SKUs — stockout frequency dropped materially. Got certified by the Demand Driven Institute."},
+    {k:['six sigma','dmaic','green belt','lean','kaizen','5s','waste','vsm','process'],
+     r:"Green Belt — DMAIC is almost a reflex for me now. Define: precise problem statement with financial impact. Measure: reliable data collection, check measurement system first. Analyse: fishbone, 5-Why, Pareto, hypothesis testing. Improve: targeted, tested interventions. Control: SOPs and control charts so improvements stick. At Kothari Electronics traced a recurring defect to batch inconsistency at one supplier — fishbone pointed there, dual-sourcing fixed it, p-chart monitors it. Rs 30K annual savings. Six Sigma only matters when applied to real problems."},
+    {k:['procurement','sourcing','vendor','supplier','rfq','tco','spend','contract','buyer'],
+     r:"Strategic sourcing is intellectually the most interesting part of supply chain — you are simultaneously optimising price, quality, risk, and a relationship, and the right answer is rarely the cheapest option. My process: spend analysis → category strategy → RFQ → weighted scorecard (I weight quality and delivery reliability heavily — learned why the hard way) → negotiate on TCO not unit price → SRM for strategic partners. At Kothari Electronics I owned this end-to-end: Rs 2M+ spend, 15+ suppliers, renegotiated top 5 to preferred-partner arrangements. TCO thinking is what separates good buyers from great ones."},
+    {k:['inventory','stock','eoq','reorder','safety stock','abc','xyz','turns','warehouse','stockout'],
+     r:"Inventory is where theory meets reality most visibly. ABC by value, XYZ by variability. A/X items get tight control — possible VMI or daily signals. C/Z items get generous buffers and simple min-max. EOQ is a useful baseline but assumes stable demand and costs — which is almost never true in practice. Safety stock: I calculate demand variability and lead time variability separately because they respond to different interventions. The biggest inventory win at Kothari Electronics was not cutting safety stock — it was fixing the demand signal quality so replenishment triggered at the right time."},
+    {k:['analytics','r language','python','sql','tableau','excel','anylogistix','tools','software','data','coding'],
+     r:"Honest breakdown: R is my strongest — wrote production-quality statistical models, the entire iSCM index algorithm, forecasting pipelines in R (tidyverse, ggplot2, forecast package). Python for data manipulation and automation — pandas, numpy, scikit-learn for basic ML. SQL — complex queries, window functions, CTEs, multi-table joins. Tableau for interactive supply chain dashboards. Excel — genuinely advanced: Power Query for ETL, Solver for optimisation, dynamic arrays. Anylogistix for network design simulations. Most important skill: communicating the insight clearly to someone who does not care about your methodology."},
+    {k:['forecasting','demand planning','sop','arima','time series','predict','s&op'],
+     r:"Demand planning is where the analytical rubber meets the business road. Methods I use: ARIMA and exponential smoothing (Holt-Winters for trend + seasonality) in R, regression-based causal models when you have good external drivers. I track forecast bias not just accuracy — systematic bias is fixable, random error is not. S&OP process: reconcile demand plan, supply constraints, and financial targets monthly across functions. The hardest part of S&OP is never the maths — it is getting sales to give you honest numbers rather than sandbagged targets."},
+    {k:['logistics','transportation','shipping','freight','3pl','incoterms','last mile','delivery'],
+     r:"Logistics is the physical manifestation of supply chain strategy — and it is often where the margin lives or dies. Modes: ocean (low cost, slow), air (expensive, fast, high-value items), truck (FTL vs LTL for last-mile flexibility). Incoterms matter — FOB means risk transfers at port of loading, DDP means supplier takes full delivery risk; your choice affects insurance, customs, and cash flow. 3PL for execution, 4PL for managing the 3PLs. At Kothari Electronics managed 3 freight partners across Maharashtra — reduced average delivery time through better routing and communication."},
+    {k:['network design','distribution','dc','warehouse location','facility','anylogistix','simulation'],
+     r:"Network design is one of the most strategic decisions in supply chain — you are making 10-year capital commitments based on demand projections that are uncertain. Core trade-off: fewer, larger DCs give lower fixed cost and lower inventory (consolidation) but higher transport cost and longer lead times; more, smaller DCs give faster delivery but higher fixed cost. I model these in Anylogistix — simulate inventory vs transport trade-offs, demand scenarios, disruption impacts. The COVID lesson: geographic concentration and single-source dependency are systemic vulnerabilities, not just risks."},
+    {k:['risk','resilience','disruption','covid','resilient','mitigation','fmea'],
+     r:"Supply chain risk is finally getting the C-suite attention it deserves — COVID did that. Risk categories: supply (supplier failure, quality), demand (forecast error), logistics (disruption), geopolitical (tariffs, trade wars), natural (pandemics, climate). FMEA applied to SC: Severity × Occurrence × Detection = RPN for each risk node. Mitigation: diversification (multi-source, multi-geography), redundancy (safety stock, backup suppliers), postponement, visibility (control towers, IoT). Post-COVID reshoring and nearshoring: the total cost calculation changed when you properly account for lead time variability and disruption risk — not just labour cost."},
+    {k:['scor','framework','kpi','metrics','otif','cash to cash','perfect order'],
+     r:"SCOR is my default lens for diagnosing a supply chain holistically. Six processes: Plan, Source, Make, Deliver, Return, Enable. Level 1 metrics: Reliability (OTIF — on time in full, perfect order fulfillment rate), Responsiveness (order fulfillment cycle time), Agility (flexibility to respond to demand changes), Cost (COGS + SC management cost), Asset Management (cash-to-cash cycle, ROA). The power of SCOR is that it forces you to look at all dimensions simultaneously — most SC problems I've seen are diagnosed purely on cost while reliability or agility is the real issue."},
+    {k:['why hire','why you','strengths','value','differentiate','stand out','unique'],
+     r:"Three things I would point to. First, real experience: the Rs 200K savings at Kothari Electronics is an actual business outcome, not a case study. I have made procurement decisions with real financial consequences. Second, I combine quantitative rigour with people skills — I can build an optimisation model in R and explain it to a warehouse manager in language that makes him want to use it. Most analysts can do one of those things. Third, I am a genuine student of this discipline — I got my DDMRP certification because I was frustrated with how MRP was handling volatile demand at Kothari, not because it looked good on a resume."},
+    {k:['contact','email','phone','reach','hire','opportunity','available','job','role','recruit','linkedin'],
+     r:"Actively looking for full-time supply chain, operations, or analytics roles starting June 2026. Email me: tirth14503@gmail.com (check it constantly). Phone: (773) 654-8682. LinkedIn: linkedin.com/in/tirthalkothari. I need OPT/H-1B sponsorship — always raise this upfront. If you want to talk about a role or just supply chain in general, reach out. I respond fast."},
+    {k:['passion','love','enjoy','interesting','favourite','why supply chain','motivation'],
+     r:"Supply chain is simultaneously a global systems problem and a deeply human one. At the systems level you are optimising flows of material, information, and money across networks spanning continents — analytically hard and interesting. But every node in that network is a person: the supplier under cost pressure, the warehouse worker who decides whether to follow the reorder policy, the customer waiting for their order. The best SC work I have done required understanding both levels at once. And there is something compelling about a discipline where getting it right is invisible — when supply chains work, nobody notices. When they break, everyone notices."},
+    {k:['esg','sustainability','carbon','scope','green','circular','environment'],
+     r:"ESG in supply chain is where I think the next decade of SC innovation happens. Scope 3 emissions — upstream and downstream supply chain — are typically 70-90% of a company's carbon footprint. Modal shift in logistics (sea over air) is often the highest-impact intervention. I included a sustainability sub-index in the iSCM national SC performance index — it was one of the methodological improvements that enhanced the methodology by 40%. Supplier sustainability assessment: EcoVadis, CDP questionnaires, audit programmes. Circular economy thinking — design for disassembly, take-back, remanufacturing — is going to fundamentally change how we think about end-of-life in supply chains."},
+    {k:['visa','opt','h1b','f1','sponsor','sponsorship','authorization','work'],
+     r:"On F-1 student visa, will need OPT after June 2026 graduation and eventually H-1B. OPT gives 3 years of work authorization for STEM graduates — meaningful runway. I raise this proactively because I think it is better to have that conversation early. I focus on companies with track records of sponsoring supply chain and analytics roles."},
+    {k:['salary','compensation','pay','expect'],
+     r:"I have done my research on what SC analyst and associate roles pay in Chicago and other major US markets. Looking for a market-rate offer — not trying to undersell or overreach. Email me at tirth14503@gmail.com and we can talk specifics once we've established fit."},
+    {k:['chicago','location','live','based','city'],
+     r:"Based in Chicago — Lincoln Park, close to DePaul's campus. Moved here in 2024 for the MS. Before that, Mumbai my whole life — grew up there, university there, worked there. Chicago winters after Mumbai are genuinely brutal. But I love it for supply chain — genuine logistics hub, exceptional industry networking. Caterpillar, McDonald's, Abbott, Ferrara, and hundreds of manufacturers within driving distance. Great city for what I am trying to do."},
   ];
 
   function offlineReply(txt){
     const lower=txt.toLowerCase();
-    let best=null, bestScore=0;
+    let best=null,bestScore=0;
     for(const entry of KB){
       const score=entry.k.filter(k=>lower.includes(k)).length;
       if(score>bestScore){bestScore=score;best=entry;}
     }
     if(best&&bestScore>0)return best.r;
-    return "That is a great question — but I would rather give you a real answer than a generic one. Email me at tirth14503@gmail.com or connect at linkedin.com/in/tirthalkothari and we can have a proper conversation. I respond fast.";
+    return "Interesting question — I would rather give you a thoughtful answer than a generic one. Email me at tirth14503@gmail.com or find me on LinkedIn at linkedin.com/in/tirthalkothari. I respond fast, and I genuinely enjoy these conversations.";
+  }
+
+  // ── Scenario Feature ──
+  const SCENARIOS=[
+    {title:"🏭 The Bullwhip Crisis",prompt:"A retailer of consumer electronics tells you their distributor has been placing increasingly large orders even though their actual retail sales have been flat. Your inventory at the manufacturer level has swung wildly — from near-stockout to 4 months of excess in 6 months. What is happening, what caused it, and what three specific interventions would you recommend?"},
+    {title:"🚢 The Port Shutdown",prompt:"Your company sources 60% of critical components from a single supplier in Southeast Asia. A major port closes due to a labor strike — estimated 3-week disruption. You have 2 weeks of inventory on hand. Walk me through your response plan: immediate actions, medium-term adjustments, and long-term resilience recommendations."},
+    {title:"📊 The Inventory Puzzle",prompt:"Your CFO wants to cut inventory by 30% to free up cash. Your sales team says that would cause stockouts and lose customers. Your supply chain team says safety stock is already lean. How do you diagnose the situation, what data do you look at, and how do you mediate between these competing priorities?"},
+    {title:"🤝 The Supplier Negotiation",prompt:"Your best-performing supplier (30% of your spend, excellent quality and delivery) has just sent you a price increase notice of 18% citing raw material inflation. You cannot absorb it fully. How do you approach the negotiation — what is your strategy, what concessions might you offer, and what is your walk-away position?"},
+  ];
+
+  let scenarioActive=false;
+
+  function launchScenario(){
+    const s=SCENARIOS[Math.floor(Math.random()*SCENARIOS.length)];
+    chips.style.display='none';
+    scenarioActive=true;
+    const intro=`Let's run a quick supply chain scenario. I'll present a real-world challenge — give me your thinking and I'll weigh in with how I'd approach it.\n\n**${s.title}**\n\n${s.prompt}`;
+    addBot(intro);
+    history.push({role:'assistant',content:intro});
   }
 
   async function doSend(){
@@ -2544,14 +2672,14 @@ RESPONSE RULES
     let replied=false;
     try{
       const ctrl=new AbortController();
-      const timer=setTimeout(()=>ctrl.abort(),12000);
+      const timer=setTimeout(()=>ctrl.abort(),18000);
       const r=await fetch('https://api.anthropic.com/v1/messages',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
         signal:ctrl.signal,
         body:JSON.stringify({
           model:'claude-sonnet-4-20250514',
-          max_tokens:700,
+          max_tokens:900,
           system:SYSTEM,
           messages:history
         })
@@ -2572,6 +2700,10 @@ RESPONSE RULES
     }
     send.disabled=false; input.focus();
   }
+
+  // Scenario button
+  const scenBtn=document.getElementById('ai-scenario-btn');
+  if(scenBtn)scenBtn.addEventListener('click',launchScenario);
 
   send.addEventListener('click', doSend);
   input.addEventListener('keydown', e=>{e.stopPropagation(); if(e.key==='Enter')doSend();});
